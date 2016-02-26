@@ -17,3 +17,5 @@ class PyttsSmokeTest(TestCase):
         """
         from ...pytts import manager
         self.assertIsInstance(manager, ModuleType)
+        from ...control import manager as original_manager
+        self.assertEqual(manager, original_manager)
