@@ -9,7 +9,7 @@ test-pytest:
 	py.test --cache-clear --strict -c pytest.rc tts
 
 test-pytest-coverage:
-	py.test --cov=tts --cache-clear --strict -c pytest.rc tts
+	py.test --cov=tts --cov-config=coverage.rc --cache-clear --strict -c pytest.rc tts
 
 clean: clean-pycache clean-pyc_pyo clean-test_cache clean-coverage
 
