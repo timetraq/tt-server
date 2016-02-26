@@ -18,4 +18,4 @@ notifications:
     on_failure: always
 
 after_success:
-  - (cd pytts && coveralls -c coverage.rc)
+  - (cd pytts && coveralls --rcfile=coverage.rc)
