@@ -1,0 +1,23 @@
+language: python
+
+python:
+  - "3.4"
+  - "3.5"
+  - "nightly"
+
+install:
+  - pip install -U pip setuptools
+  - pip install -r requirements.txt
+  - pip install coveralls
+
+script:
+  - (cd pytts && make test)
+
+notifications:
+  email:
+    on_success: change
+    on_failure: always
+
+after_success:
+  - (cd pytts && coverage report)
+  - (cd pytts && coveralls)
