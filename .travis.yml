@@ -11,7 +11,7 @@ install:
   - pip install coveralls
 
 script:
-  - (cd pytts && make test)
+  - (cd pytts && make ci)
 
 notifications:
   email:
