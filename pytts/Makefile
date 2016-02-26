@@ -1,15 +1,15 @@
 ci: clean test
 
-test: test-pylint test-pytest-coverage
+test: test-pylint test-smoke test-pytest
 
 test-pylint:
 	pylint --rcfile=pylint.rc tts
 
-test-pytest:
-	py.test --cache-clear --strict -c pytest.rc tts
+test-smoke:
+	py.test -c pytest-smoke.rc
 
-test-pytest-coverage:
-	py.test --cov=tts --cov-config=coverage.rc --cache-clear --strict -c pytest.rc tts
+test-pytest:
+	py.test -c pytest.rc
 
 clean: clean-pycache clean-pyc_pyo clean-test_cache clean-coverage
 

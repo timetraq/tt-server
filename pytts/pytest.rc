@@ -1,0 +1,3 @@
+[pytest]
+testpaths = tts/test
+addopts = --cache-clear --strict --cov=tts --cov-config=coverage.rc
