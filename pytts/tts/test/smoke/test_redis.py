@@ -63,6 +63,7 @@ class RedisSmokeTest(TestCase):
         """
         Simple Echo Test
         """
-        redis_connection = redis.Redis(connection_pool=self.__redis_pool)
+        redis_connection = redis.StrictRedis(connection_pool=self.__redis_pool)
         test = redis_connection.echo(b'test')
         self.assertEqual(test, b'test')
+        del redis_connection
