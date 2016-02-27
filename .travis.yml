@@ -3,6 +3,12 @@ language: python
 python:
   - "3.5"
 
+services:
+  - redis-server
+
+env:
+  - PYTTS_CONFIGURATION_FILE=$TRAVIS_BUILD_DIR/pytts/tt-server.json
+
 install:
   - pip install -U pip setuptools
   - pip install -r requirements.txt
@@ -11,10 +17,10 @@ install:
 script:
   - (cd pytts && make ci)
 
+after_success:
+  - (cd pytts && coveralls --rcfile=coverage.rc)
+
 notifications:
   email:
     on_success: change
     on_failure: always
-
-after_success:
-  - (cd pytts && coveralls --rcfile=coverage.rc)

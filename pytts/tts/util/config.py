@@ -11,7 +11,7 @@ from .singleton import SingletonMeta
 
 class ConfigurationFileFinder(object, metaclass=SingletonMeta):
     """
-    Provide a finder for the configuration file '``pytts.json``'
+    Provide a finder for the configuration file '``tt-server.json``'
     """
 
     @staticmethod

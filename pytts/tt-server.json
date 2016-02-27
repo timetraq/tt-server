@@ -1,0 +1,13 @@
+{
+  "tts": {
+    "queues": {
+      "command": {
+        "host": "localhost",
+        "port": 6379,
+        "socket": null,
+        "db": 0,
+        "queue": "PYTTS_COMMAND_QUEUE"
+      }
+    }
+  }
+}
