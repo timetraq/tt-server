@@ -71,3 +71,13 @@ class RedisQueue(object):
         :rtype: redis.ConnectionPool
         """
         return redis.ConnectionPool.from_url(url=self.build_url())
+
+    @property
+    def queue(self) -> str:
+        """
+        Get the Queue key for this redis queue
+
+        :return: The Redis Queue Key
+        :rtype: str
+        """
+        return self.__queue_key

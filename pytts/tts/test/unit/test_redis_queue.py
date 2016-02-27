@@ -322,3 +322,37 @@ class RedisQueueTest(TestCase):
         url1 = rq1.build_url()
         url2 = rq2.build_url()
         self.assertNotEqual(url1, url2)
+
+    def test_queue_property(self):
+        """
+        Test that the queue property reflects the setting
+        """
+        config = {
+            'queue': 'PYTTS_TEST_QUEUE-0',
+        }
+        redis_queue = RedisQueue(config)
+        self.assertEqual(
+            'PYTTS_TEST_QUEUE-0',
+            redis_queue.queue
+        )
+
+    def test_multiple_queue_properies(self):
+        """
+        Test the independence of these properties
+        """
+        config_one = {
+            'queue': 'PYTTS_TEST_QUEUE-01',
+        }
+        config_two = {
+            'queue': 'PYTTS_TEST_QUEUE-02',
+        }
+        redis_queue_one = RedisQueue(config_one)
+        redis_queue_two = RedisQueue(config_two)
+        self.assertEqual(
+            'PYTTS_TEST_QUEUE-01',
+            redis_queue_one.queue
+        )
+        self.assertEqual(
+            'PYTTS_TEST_QUEUE-02',
+            redis_queue_two.queue
+        )
