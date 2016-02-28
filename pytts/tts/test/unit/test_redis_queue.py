@@ -7,7 +7,7 @@ from unittest import TestCase
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from ...util.config import ConfigurationFileFinder
-from ...util.queue.redis import RedisQueueConfiguration
+from ...util.queue.redis import RedisQueueAccess, RedisQueueConfiguration
 from ...util.singleton import SingletonMeta
 
 
@@ -356,3 +356,110 @@ class RedisQueueConfigurationTest(TestCase):
             'PYTTS_TEST_QUEUE-02',
             redis_queue_two.queue
         )
+
+
+class RedisQueueAccessTest(TestCase):
+    """
+    Test the access class
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """
+        Setup the test class
+        """
+        SingletonMeta.delete(ConfigurationFileFinder)
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+        cls.__redis = RedisQueueConfiguration(cls.__config)
+        cls.__pool = cls.__redis.create_redis_connection_pool()
+        StrictRedis(connection_pool=cls.__pool).flushdb()
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Clean up singleton instances of the Configuration File Finder and clear the database
+        """
+        StrictRedis(connection_pool=cls.__pool).flushdb()
+        SingletonMeta.delete(ConfigurationFileFinder)
+
+    def setUp(self):
+        """
+        Flush the database before running a test
+        """
+        StrictRedis(connection_pool=self.__pool).flushdb()
+
+    def test_key_generation(self):
+        """
+        Test if the generated keys match the specification
+        """
+        base_name = self.__config['queue']
+        pubsub_name = '{:s}_PUBSUB_CH'.format(base_name)
+        rqa = RedisQueueAccess(self.__config)
+        self.assertEqual(base_name, rqa.queue)
+        self.assertEqual(pubsub_name, rqa.pubsub_channel)
+
+    def test_preparation(self):
+        """
+        Test the preparation after initializing the class
+        """
+        rqa = RedisQueueAccess(self.__config)
+        redis = StrictRedis(connection_pool=self.__pool)
+        type_queue = redis.type(rqa.queue)
+        type_pubsub = redis.type(rqa.pubsub_channel)
+        self.assertEqual(type_queue, b'none')
+        self.assertEqual(type_pubsub, b'none')
+
+    def test_list_preparation_with_exisiting_list(self):
+        """
+        Test preparation with an already existing list
+        """
+        redis = StrictRedis(connection_pool=self.__pool)
+        redis.lpush(self.__config['queue'], 'test')
+        rqa = RedisQueueAccess(self.__config)
+        type_queue = redis.type(rqa.queue)
+        self.assertEqual(type_queue, b'list')
+
+    def test_list_preparation_with_invalid_type(self):
+        """
+        When a list key is already there with a wrong type
+        """
+        redis = StrictRedis(connection_pool=self.__pool)
+        redis.set(self.__config['queue'], 'test')
+        self.assertRaises(ValueError, RedisQueueAccess, self.__config)
+
+    def test_empty_list_contents_external(self):
+        """
+        Test if there comes nothing back when the list is empty (does the preparation work as expected?)
+        """
+        RedisQueueAccess(self.__config)
+        redis = StrictRedis(connection_pool=self.__pool)
+        data = redis.lpop(self.__config['queue'])
+        self.assertIsNone(data)
+
+    def test_empty_list_contents_internal(self):
+        """
+        Test if there comes nothing back when the list is empty (does the preparation work as expected?)
+        """
+        rqa = RedisQueueAccess(self.__config)
+        redis = StrictRedis(connection_pool=rqa.create_redis_connection_pool())
+        data = redis.lpop(rqa.queue)
+        self.assertIsNone(data)
+
+    def test_filled_list_contents(self):
+        """
+        Test if there are entries in the list (does the preparation work as expected?)
+        """
+        fill_items = (
+            'item_1',
+            'item_2',
+            'item_three',
+        )
+        redis_filler = StrictRedis(connection_pool=self.__pool)
+        for item in fill_items:
+            redis_filler.lpush(self.__config['queue'], item)
+        rqa = RedisQueueAccess(self.__config)
+        redis_receiver = StrictRedis(connection_pool=rqa.create_redis_connection_pool())
+        for item in fill_items:
+            data = redis_receiver.rpop(rqa.queue)
+            self.assertEqual(bytes(item, encoding='UTF-8'), data)
+        self.assertIsNone(redis_receiver.rpop(rqa.queue))
