@@ -1,3 +1,5 @@
 [pytest]
 testpaths = tts/test/smoke
 addopts = --cache-clear --strict -x -v
+timeout = 2
+timeout_method = thread

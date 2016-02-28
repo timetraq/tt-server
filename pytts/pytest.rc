@@ -1,3 +1,5 @@
 [pytest]
 testpaths = tts/test
 addopts = --cache-clear --strict --cov=tts --cov-config=coverage.rc -v
+timeout = 0
+timeout_method = thread
