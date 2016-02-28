@@ -6,6 +6,8 @@ Test the Redis Queue superclass
 from unittest import TestCase
 from unittest.mock import Mock
 from time import sleep
+
+import pytest
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from ...util.config import ConfigurationFileFinder
@@ -285,6 +287,7 @@ class RedisQueueConfigurationTest(TestCase):
         )
         del redis_connection
 
+    @pytest.mark.timeout(15)
     def test_connection_pool_with_invalid_settings(self) -> None:
         """
         Use invalid settings to check the Connection Pool creation
@@ -576,6 +579,7 @@ class RedisQueueConsumerTest(TestCase):
         """
         sleep(2)
 
+    @pytest.mark.timeout(60)
     def test_receiving(self) -> None:
         """
         Test the receiving of a message
@@ -599,6 +603,7 @@ class RedisQueueConsumerTest(TestCase):
         self.assertEqual(b'Test Message to Mock', call_args)
         rqc.stop()
 
+    @pytest.mark.timeout(120)
     def test_multi_receiving(self) -> None:
         """
         Pump some messages and check the mock
