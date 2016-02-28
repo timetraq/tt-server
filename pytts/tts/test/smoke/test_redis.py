@@ -30,26 +30,26 @@ class RedisSmokeTest(TestCase):
         assert 'queues' in tts
         queues = tts['queues']
         assert isinstance(queues, dict)
-        assert 'command' in queues
-        command = queues['command']
-        assert isinstance(command, dict)
-        assert 'db' in command
-        assert 'queue' in command
+        assert 'test' in queues
+        test = queues['test']
+        assert isinstance(test, dict)
+        assert 'db' in test
+        assert 'queue' in test
         auth = None
-        if 'auth' in command and command['auth'] is not None:
-            auth = command['auth']
-        if 'socket' in command and command['socket'] is not None:
+        if 'auth' in test and test['auth'] is not None:
+            auth = test['auth']
+        if 'socket' in test and test['socket'] is not None:
             if auth is not None:
-                redis_url = 'unix://:{:s}@{:s}?db={:d}'.format(auth, command['socket'], command['db'])
+                redis_url = 'unix://:{:s}@{:s}?db={:d}'.format(auth, test['socket'], test['db'])
             else:
-                redis_url = 'unix://@{:s}?db={:d}'.format(command['socket'], command['db'])
+                redis_url = 'unix://@{:s}?db={:d}'.format(test['socket'], test['db'])
         else:
-            assert 'host' in command
-            assert 'port' in command
+            assert 'host' in test
+            assert 'port' in test
             if auth is not None:
-                redis_url = 'redis://:{:s}@{:s}:{:d}/{:d}'.format(auth, command['host'], command['port'], command['db'])
+                redis_url = 'redis://:{:s}@{:s}:{:d}/{:d}'.format(auth, test['host'], test['port'], test['db'])
             else:
-                redis_url = 'redis://@{:s}:{:d}/{:d}'.format(command['host'], command['port'], command['db'])
+                redis_url = 'redis://@{:s}:{:d}/{:d}'.format(test['host'], test['port'], test['db'])
         cls.__redis_pool = redis.ConnectionPool.from_url(url=redis_url)
 
     @classmethod

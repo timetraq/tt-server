@@ -3,6 +3,12 @@ Tests Collection for the Control Manager, a central component of the Timetraq Se
 """
 
 from unittest import TestCase
+from time import sleep
+
+from redis import StrictRedis
+
+from ...util.config import ConfigurationFileFinder
+from ...util.queue.redis import RedisQueueConfiguration
 from ...control.manager import ControlManager
 from ...util.singleton import SingletonMeta
 
@@ -16,6 +22,8 @@ class ControlManagerInitializationTest(TestCase):
         """
         Delete existing singleton instance of the Control Manager - clean up!
         """
+        ControlManager().stop()
+        sleep(2)
         SingletonMeta.delete(ControlManager)
 
     def test_single_init(self) -> None:
@@ -71,3 +79,64 @@ class ControlManagerInitializationTest(TestCase):
         """
         control_manager = ControlManager.factory()
         self.assertRaises(RuntimeError, control_manager.configure)
+
+
+class ControlManagerStopTest(TestCase):
+    """
+    Test how the control manager main command queue can be stopped
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Setup the test class
+        """
+        SingletonMeta.delete(ConfigurationFileFinder)
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """
+        Clean up singleton instances of the Configuration File Finder and clear the database
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(cls.__config).create_redis_connection_pool()).flushdb()
+        SingletonMeta.delete(ConfigurationFileFinder)
+
+    def tearDown(self) -> None:
+        """
+        Delete existing singleton instance of the Control Manager - clean up!
+        """
+        ControlManager().stop()
+        sleep(2)
+        SingletonMeta.delete(ControlManager)
+
+    def test_stop_command_via_direct_call(self) -> None:
+        """
+        Call the stop method directly
+        """
+        ControlManager.factory(list())
+        self.assertTrue(ControlManager().command_handler.should_run)
+        ControlManager().stop()
+        self.assertFalse(ControlManager().command_handler.should_run)
+
+    def test_stop_command_via_manage_call(self) -> None:
+        """
+        Call the stop method via manage call
+        """
+        ControlManager.factory(list())
+        self.assertTrue(ControlManager().command_handler.should_run)
+        ControlManager().manage(b'STOP')
+        self.assertFalse(ControlManager().command_handler.should_run)
+
+    def test_stop_command_via_queue(self):
+        """
+        Call the stop via queue command
+        """
+        ControlManager.factory(list())
+        self.assertTrue(ControlManager().command_handler.should_run)
+        rqc = RedisQueueConfiguration(self.__config)
+        redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
+        redis.rpush(rqc.queue, 'STOP')
+        redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
+        sleep(1)
+        self.assertFalse(ControlManager().command_handler.should_run)

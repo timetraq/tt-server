@@ -200,6 +200,16 @@ class RedisQueueConsumer(RedisQueueAccess):
         """
         self.__should_run = False
 
+    @property
+    def should_run(self) -> bool:
+        """
+        Tell if the queue worker should run or not
+
+        :return: Should-Run-State
+        :rtype: bool
+        """
+        return self.__should_run
+
 
 class RedisQueueProducer(RedisQueueAccess):
     """

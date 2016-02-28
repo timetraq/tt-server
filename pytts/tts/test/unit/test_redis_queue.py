@@ -277,7 +277,7 @@ class RedisQueueConfigurationTest(TestCase):
         Basically, this repeats the test from the Smoke Tests, but now using the RedisQueueConfiguration implementation
         """
         config = ConfigurationFileFinder().find_as_json()
-        redis_config = config['tts']['queues']['command']
+        redis_config = config['tts']['queues']['test']
         redis_queue = RedisQueueConfiguration(redis_config)
         pool = redis_queue.create_redis_connection_pool()
         redis_connection = StrictRedis(connection_pool=pool)
@@ -374,7 +374,7 @@ class RedisQueueAccessTest(TestCase):
         Setup the test class
         """
         SingletonMeta.delete(ConfigurationFileFinder)
-        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['test']
         cls.__redis = RedisQueueConfiguration(cls.__config)
         cls.__pool = cls.__redis.create_redis_connection_pool()
         StrictRedis(connection_pool=cls.__pool).flushdb()
@@ -481,7 +481,7 @@ class RedisQueueProducerTest(TestCase):
         Setup the test class
         """
         SingletonMeta.delete(ConfigurationFileFinder)
-        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['test']
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -557,7 +557,7 @@ class RedisQueueConsumerTest(TestCase):
         Setup the test class
         """
         SingletonMeta.delete(ConfigurationFileFinder)
-        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['test']
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -621,3 +621,14 @@ class RedisQueueConsumerTest(TestCase):
             received = mock.call_args_list[message_id][0][0]
             self.assertEqual(expected_message, received)
         rqc.stop()
+
+    @pytest.mark.timeout(30)
+    def test_should_run_property(self):
+        """
+        Check the should_run property
+        """
+        mock = Mock()
+        rqc = RedisQueueConsumer(self.__config, mock)
+        self.assertTrue(rqc.should_run)
+        rqc.stop()
+        self.assertFalse(rqc.should_run)

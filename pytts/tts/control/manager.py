@@ -1,7 +1,8 @@
 """
 This holds stuff to manage our server instance
 """
-
+from tts.util.config import ConfigurationFileFinder
+from tts.util.queue.redis import RedisQueueConsumer, RedisQueueAccess
 from ..util.singleton import SingletonMeta
 
 
@@ -11,6 +12,7 @@ class ControlManager(object, metaclass=SingletonMeta):
     """
 
     __initialized = False
+    command_handler = None
 
     def __init__(self, no_init: bool=False) -> None:
         """
@@ -42,6 +44,23 @@ class ControlManager(object, metaclass=SingletonMeta):
         """
         return self.__initialized
 
+    def stop(self):
+        """
+        Stop the command handler
+        """
+        if self.command_handler is not None:
+            self.command_handler.stop()
+
+    def manage(self, command: bytes) -> None:
+        """
+        Manage incoming commands
+
+        :param command: The raw command
+        """
+        cmd = command.decode(encoding='UTF-8').lower()
+        if cmd == 'stop':
+            self.stop()
+
     @staticmethod
     def factory(argv: list=None) -> 'ControlManager':
         """
@@ -56,4 +75,10 @@ class ControlManager(object, metaclass=SingletonMeta):
         if control_manager.initialized:
             raise RuntimeError('ControlManager already initialized')
         control_manager.configure(argv)
+        config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+        queue_access = RedisQueueAccess(config)
+        queue_access.get_connection().delete(queue_access.queue)
+        control_manager.command_handler = RedisQueueConsumer(
+            config, control_manager.manage
+        )
         return control_manager
