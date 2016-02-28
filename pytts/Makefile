@@ -12,6 +12,10 @@ test-pylint:
 test-pylint_html:
 	pylint --rcfile=pylint.rc -f html tts > pylint-report.html
 
+.PHONY: test-pylint_multithread
+test-pylint_multithread:
+	pylint --rcfile=pylint.rc -j 4 tts
+
 .PHONY: test-smoke
 test-smoke:
 	py.test -c pytest-smoke.rc
