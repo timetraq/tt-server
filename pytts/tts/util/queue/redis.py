@@ -174,8 +174,6 @@ class RedisQueueConsumer(RedisQueueAccess):
         """
         Work Queue entries
         """
-        if not self.__should_run:
-            return
         redis_connection = self.get_connection()
         while self.__should_run:
             workload = redis_connection.lpop(self.queue)

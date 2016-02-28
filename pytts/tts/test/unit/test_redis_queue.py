@@ -582,6 +582,7 @@ class RedisQueueConsumerTest(TestCase):
         """
         mock = Mock()
         rqc = RedisQueueConsumer(self.__config, mock)
+        sleep(1)
         self.assertFalse(mock.called)
         self.assertEqual(0, mock.call_count)
         rqp = RedisQueueProducer(self.__config)
