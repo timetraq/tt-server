@@ -2,6 +2,7 @@
 Implement Queues with Redis
 """
 
+from threading import Thread
 import redis
 
 
@@ -144,3 +145,80 @@ class RedisQueueAccess(RedisQueueConfiguration):
         :rtype: redis.StrictRedis
         """
         return redis.StrictRedis(connection_pool=self.connection_pool)
+
+
+class RedisQueueConsumer(RedisQueueAccess):
+    """
+    Consume from a Redis Queue
+    """
+
+    __callback = None
+    __should_run = True
+    __watcher = None
+
+    def __init__(self, configuration: dict, callback, daemon: bool=False):
+        """
+        Create a Redis Queue consumer with the configuration and a ``callback`` method.
+
+        :param dict configuration: Configuration of the Queue
+        :param callback: Callback Method
+        :param bool daemon: Should the Consumer be a daemon
+        """
+        super(RedisQueueConsumer, self).__init__(configuration)
+        self.__callback = callback
+        self.work()
+        self.__watcher = Thread(target=self.__listener, daemon=daemon)
+        self.__watcher.start()
+
+    def work(self) -> None:
+        """
+        Work Queue entries
+        """
+        if not self.__should_run:
+            return
+        redis_connection = self.get_connection()
+        while self.__should_run:
+            workload = redis_connection.lpop(self.queue)
+            if workload is None:
+                break
+            self.__callback(workload)
+
+    def __listener(self) -> None:
+        """
+        Wait for messages on the pubsub channel
+        """
+        redis_connection = self.get_connection()
+        pubsub = redis_connection.pubsub()
+        pubsub.subscribe(self.pubsub_channel)
+        while self.__should_run:
+            message = pubsub.get_message(ignore_subscribe_messages=True, timeout=.125)
+            if message:
+                self.work()
+        pubsub.unsubscribe(self.pubsub_channel)
+
+    def stop(self) -> None:
+        """
+        Stop the consumer
+        """
+        self.__should_run = False
+
+
+class RedisQueueProducer(RedisQueueAccess):
+    """
+    Use this to fire messages into a queue
+    """
+
+    def __init__(self, configuration: dict):
+        super(RedisQueueProducer, self).__init__(configuration)
+
+    def fire_message(self, message: str) -> int:
+        """
+        Send a message to the queue
+
+        :param str message: Message to be send
+        :return: Number of clients that received the message
+        :rtype: int
+        """
+        redis_connection = self.get_connection()
+        redis_connection.rpush(self.queue, message)
+        return redis_connection.publish(self.pubsub_channel, '1')

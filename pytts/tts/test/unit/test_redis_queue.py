@@ -4,10 +4,12 @@ Test the Redis Queue superclass
 """
 
 from unittest import TestCase
+from unittest.mock import Mock
+from time import sleep
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from ...util.config import ConfigurationFileFinder
-from ...util.queue.redis import RedisQueueAccess, RedisQueueConfiguration
+from ...util.queue.redis import RedisQueueAccess, RedisQueueConfiguration, RedisQueueConsumer, RedisQueueProducer
 from ...util.singleton import SingletonMeta
 
 
@@ -17,7 +19,7 @@ class RedisQueueConfigurationTest(TestCase):
     """
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         """
         Clean up singleton instances of the Configuration File Finder
         """
@@ -45,7 +47,7 @@ class RedisQueueConfigurationTest(TestCase):
         }
         self.assertRaises(ValueError, RedisQueueConfiguration, config)
 
-    def test_default_settings(self):
+    def test_default_settings(self) -> None:
         """
         With an Queue name, a url should be able to build up with default values
         """
@@ -323,7 +325,7 @@ class RedisQueueConfigurationTest(TestCase):
         url2 = rq2.build_url()
         self.assertNotEqual(url1, url2)
 
-    def test_queue_property(self):
+    def test_queue_property(self) -> None:
         """
         Test that the queue property reflects the setting
         """
@@ -336,7 +338,7 @@ class RedisQueueConfigurationTest(TestCase):
             redis_queue.queue
         )
 
-    def test_multiple_queue_properies(self):
+    def test_multiple_queue_properies(self) -> None:
         """
         Test the independence of these properties
         """
@@ -364,7 +366,7 @@ class RedisQueueAccessTest(TestCase):
     """
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         """
         Setup the test class
         """
@@ -375,20 +377,20 @@ class RedisQueueAccessTest(TestCase):
         StrictRedis(connection_pool=cls.__pool).flushdb()
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         """
         Clean up singleton instances of the Configuration File Finder and clear the database
         """
         StrictRedis(connection_pool=cls.__pool).flushdb()
         SingletonMeta.delete(ConfigurationFileFinder)
 
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Flush the database before running a test
         """
         StrictRedis(connection_pool=self.__pool).flushdb()
 
-    def test_key_generation(self):
+    def test_key_generation(self) -> None:
         """
         Test if the generated keys match the specification
         """
@@ -398,7 +400,7 @@ class RedisQueueAccessTest(TestCase):
         self.assertEqual(base_name, rqa.queue)
         self.assertEqual(pubsub_name, rqa.pubsub_channel)
 
-    def test_preparation(self):
+    def test_preparation(self) -> None:
         """
         Test the preparation after initializing the class
         """
@@ -409,7 +411,7 @@ class RedisQueueAccessTest(TestCase):
         self.assertEqual(type_queue, b'none')
         self.assertEqual(type_pubsub, b'none')
 
-    def test_list_preparation_with_exisiting_list(self):
+    def test_list_preparation_with_exisiting_list(self) -> None:
         """
         Test preparation with an already existing list
         """
@@ -419,7 +421,7 @@ class RedisQueueAccessTest(TestCase):
         type_queue = redis.type(rqa.queue)
         self.assertEqual(type_queue, b'list')
 
-    def test_list_preparation_with_invalid_type(self):
+    def test_list_preparation_with_invalid_type(self) -> None:
         """
         When a list key is already there with a wrong type
         """
@@ -427,7 +429,7 @@ class RedisQueueAccessTest(TestCase):
         redis.set(self.__config['queue'], 'test')
         self.assertRaises(ValueError, RedisQueueAccess, self.__config)
 
-    def test_empty_list_contents_external(self):
+    def test_empty_list_contents_external(self) -> None:
         """
         Test if there comes nothing back when the list is empty (does the preparation work as expected?)
         """
@@ -436,7 +438,7 @@ class RedisQueueAccessTest(TestCase):
         data = redis.lpop(self.__config['queue'])
         self.assertIsNone(data)
 
-    def test_empty_list_contents_internal(self):
+    def test_empty_list_contents_internal(self) -> None:
         """
         Test if there comes nothing back when the list is empty (does the preparation work as expected?)
         """
@@ -445,7 +447,7 @@ class RedisQueueAccessTest(TestCase):
         data = redis.lpop(rqa.queue)
         self.assertIsNone(data)
 
-    def test_filled_list_contents(self):
+    def test_filled_list_contents(self) -> None:
         """
         Test if there are entries in the list (does the preparation work as expected?)
         """
@@ -463,3 +465,153 @@ class RedisQueueAccessTest(TestCase):
             data = redis_receiver.rpop(rqa.queue)
             self.assertEqual(bytes(item, encoding='UTF-8'), data)
         self.assertIsNone(redis_receiver.rpop(rqa.queue))
+
+
+class RedisQueueProducerTest(TestCase):
+    """
+    Test the redis queue producer
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Setup the test class
+        """
+        SingletonMeta.delete(ConfigurationFileFinder)
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """
+        Clean up singleton instances of the Configuration File Finder and clear the database
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(cls.__config).create_redis_connection_pool()).flushdb()
+        SingletonMeta.delete(ConfigurationFileFinder)
+
+    def setUp(self) -> None:
+        """
+        Flush DB before test
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(self.__config).create_redis_connection_pool()).flushdb()
+
+    def test_empty_queue(self) -> None:
+        """
+        See if a queue is empty by default
+        """
+        rqp = RedisQueueProducer(self.__config)
+        redis_connection = rqp.get_connection()
+        item = redis_connection.lpop(rqp.queue)
+        self.assertIsNone(item)
+
+    def test_empty_channel(self) -> None:
+        """
+        See if the Pub/Sub Channel is empty
+        """
+        rqp = RedisQueueProducer(self.__config)
+        redis_connection = rqp.get_connection()
+        pubsub = redis_connection.pubsub()
+        pubsub.subscribe(rqp.pubsub_channel)
+        for dummy in range(10):
+            item = pubsub.get_message(ignore_subscribe_messages=True, timeout=.5)
+            self.assertIsNone(item)
+        pubsub.unsubscribe(rqp.pubsub_channel)
+
+    def test_fire_message(self) -> None:
+        """
+        Test sending a message to the queue
+        """
+        rqp = RedisQueueProducer(self.__config)
+        redis_connection = rqp.get_connection()
+        pubsub = redis_connection.pubsub()
+        pubsub.subscribe(rqp.pubsub_channel)
+        num = rqp.fire_message('Test Message')
+        self.assertEqual(1, num)
+        item = pubsub.get_message(ignore_subscribe_messages=True, timeout=.25)
+        self.assertIsNone(item) # the ignored message
+        item = pubsub.get_message(ignore_subscribe_messages=True, timeout=.25)
+        pubsub.unsubscribe(rqp.pubsub_channel)
+        self.assertIsInstance(item, dict)
+        self.assertIn('type', item)
+        self.assertIn('data', item)
+        self.assertIn('channel', item)
+        self.assertEqual('message', item['type'])
+        self.assertEqual(b'1', item['data'])
+        self.assertEqual(bytes(rqp.pubsub_channel, encoding='UTF-8'), item['channel'])
+        item = redis_connection.lpop(rqp.queue)
+        self.assertEqual(b'Test Message', item)
+        item = redis_connection.lpop(rqp.queue)
+        self.assertIsNone(item)
+
+
+class RedisQueueConsumerTest(TestCase):
+    """
+    Test the Redis Queue Consumer
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Setup the test class
+        """
+        SingletonMeta.delete(ConfigurationFileFinder)
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """
+        Clean up singleton instances of the Configuration File Finder and clear the database
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(cls.__config).create_redis_connection_pool()).flushdb()
+        SingletonMeta.delete(ConfigurationFileFinder)
+
+    def setUp(self) -> None:
+        """
+        Flush DB before test
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(self.__config).create_redis_connection_pool()).flushdb()
+
+    def tearDown(self) -> None:
+        """
+        The stopping of the receiver may take time. So we give it.
+        """
+        sleep(2)
+
+    def test_receiving(self) -> None:
+        """
+        Test the receiving of a message
+        """
+        mock = Mock()
+        rqc = RedisQueueConsumer(self.__config, mock)
+        self.assertFalse(mock.called)
+        self.assertEqual(0, mock.call_count)
+        rqp = RedisQueueProducer(self.__config)
+        self.assertFalse(mock.called)
+        self.assertEqual(0, mock.call_count)
+        receivers = rqp.fire_message('Test Message to Mock')
+        self.assertFalse(mock.called)
+        self.assertEqual(0, mock.call_count)
+        self.assertEqual(1, receivers)
+        sleep(1)
+        self.assertTrue(mock.called)
+        self.assertEqual(1, mock.call_count)
+        call_args = mock.call_args_list[0][0][0]
+        self.assertEqual(b'Test Message to Mock', call_args)
+        rqc.stop()
+
+    def test_multi_receiving(self) -> None:
+        """
+        Pump some messages and check the mock
+        """
+        mock = Mock()
+        rqc = RedisQueueConsumer(self.__config, mock)
+        rqp = RedisQueueProducer(self.__config)
+        for message_id in range(100):
+            rqp.fire_message('Message {:d}'.format(message_id))
+        sleep(1)
+        self.assertTrue(mock.called)
+        self.assertEqual(100, mock.call_count)
+        for message_id in range(100):
+            expected_message = bytes('Message {:d}'.format(message_id), encoding='UTF-8')
+            received = mock.call_args_list[message_id][0][0]
+            self.assertEqual(expected_message, received)
+        rqc.stop()
