@@ -5,7 +5,7 @@ Implement Queues with Redis
 import redis
 
 
-class RedisQueue(object):
+class RedisQueueConfiguration(object):
     """
     Basic configuration and methods for working with Redis
     """

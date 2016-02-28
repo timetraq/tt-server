@@ -7,11 +7,11 @@ from unittest import TestCase
 from redis import StrictRedis
 from redis.exceptions import ConnectionError as RedisConnectionError
 from ...util.config import ConfigurationFileFinder
-from ...util.queue.redis import RedisQueue
+from ...util.queue.redis import RedisQueueConfiguration
 from ...util.singleton import SingletonMeta
 
 
-class RedisQueueTest(TestCase):
+class RedisQueueConfigurationTest(TestCase):
     """
     Class Tests
     """
@@ -27,13 +27,13 @@ class RedisQueueTest(TestCase):
         """
         An exception should be thrown when initializing with no configuration
         """
-        self.assertRaises(TypeError, RedisQueue)
+        self.assertRaises(TypeError, RedisQueueConfiguration)
 
     def test_none_config(self) -> None:
         """
         An exception should be thrown when initializing with ``None`` configuration
         """
-        self.assertRaises(ValueError, RedisQueue, None)
+        self.assertRaises(ValueError, RedisQueueConfiguration, None)
 
     def test_config_without_queue_name(self) -> None:
         """
@@ -43,7 +43,7 @@ class RedisQueueTest(TestCase):
             'host': '127.0.0.1',
             'port': 1234,
         }
-        self.assertRaises(ValueError, RedisQueue, config)
+        self.assertRaises(ValueError, RedisQueueConfiguration, config)
 
     def test_default_settings(self):
         """
@@ -52,7 +52,7 @@ class RedisQueueTest(TestCase):
         config = {
             'queue': 'PYTTS_TEST_QUEUE',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         # The URL scheme is defined in the Redis documentation
         # For default, we want localhost, default port, default db number, no password
@@ -69,7 +69,7 @@ class RedisQueueTest(TestCase):
             'queue': 'PYTTS_TEST_QUEUE',
             'host': 'testhost.local',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'redis://@testhost.local:6379/0',
@@ -84,7 +84,7 @@ class RedisQueueTest(TestCase):
             'queue': 'PYTTS_TEST_QUEUE',
             'port': 1234,
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'redis://@localhost:1234/0',
@@ -99,7 +99,7 @@ class RedisQueueTest(TestCase):
             'queue': 'PYTTS_TEST_QUEUE',
             'db': 5,
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'redis://@localhost:6379/5',
@@ -113,7 +113,7 @@ class RedisQueueTest(TestCase):
         config = {
             'queue': 'PYTTS_TEST_QUEUE_2',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'redis://@localhost:6379/0',
@@ -128,7 +128,7 @@ class RedisQueueTest(TestCase):
             'queue': 'PYTTS_TEST_QUEUE',
             'auth': 'supersecret',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'redis://:supersecret@localhost:6379/0',
@@ -143,7 +143,7 @@ class RedisQueueTest(TestCase):
             'queue': 'PYTTS_TEST_QUEUE',
             'socket': '/var/run/redis-socket.sock',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://@/var/run/redis-socket.sock?db=0',
@@ -159,7 +159,7 @@ class RedisQueueTest(TestCase):
             'socket': '/var/run/redis-socket.sock',
             'host': 'testhost.local',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://@/var/run/redis-socket.sock?db=0',
@@ -175,7 +175,7 @@ class RedisQueueTest(TestCase):
             'socket': '/var/run/redis-socket.sock',
             'port': 1234,
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://@/var/run/redis-socket.sock?db=0',
@@ -191,7 +191,7 @@ class RedisQueueTest(TestCase):
             'socket': '/var/run/redis-socket.sock',
             'db': 9,
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://@/var/run/redis-socket.sock?db=9',
@@ -206,7 +206,7 @@ class RedisQueueTest(TestCase):
             'queue': 'PYTTS_TEST_QUEUE_2',
             'socket': '/var/run/redis-socket.sock',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://@/var/run/redis-socket.sock?db=0',
@@ -222,7 +222,7 @@ class RedisQueueTest(TestCase):
             'socket': '/var/run/redis-socket.sock',
             'auth': 'secretcode'
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://:secretcode@/var/run/redis-socket.sock?db=0',
@@ -240,7 +240,7 @@ class RedisQueueTest(TestCase):
             'host': 'redis-server',
             'port': 4321,
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'redis://:keep-me-secret@redis-server:4321/8',
@@ -259,7 +259,7 @@ class RedisQueueTest(TestCase):
             'port': 7890,
             'socket': '/var/run/redis-test-socket.sock',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         url = redis_queue.build_url()
         self.assertEqual(
             'unix://:do-not-use@/var/run/redis-test-socket.sock?db=7',
@@ -270,11 +270,11 @@ class RedisQueueTest(TestCase):
         """
         Use the settings that are already validated via Smoke Test to check the Connection Pool creation
 
-        Basically, this repeats the test from the Smoke Tests, but now using the RedisQueue implementation
+        Basically, this repeats the test from the Smoke Tests, but now using the RedisQueueConfiguration implementation
         """
         config = ConfigurationFileFinder().find_as_json()
         redis_config = config['tts']['queues']['command']
-        redis_queue = RedisQueue(redis_config)
+        redis_queue = RedisQueueConfiguration(redis_config)
         pool = redis_queue.create_redis_connection_pool()
         redis_connection = StrictRedis(connection_pool=pool)
         self.assertEqual(
@@ -294,14 +294,14 @@ class RedisQueueTest(TestCase):
             'host': 'redis-server-that-does-not-exist.local',
             'port': 4321,
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         pool = redis_queue.create_redis_connection_pool()
         redis_connection = StrictRedis(connection_pool=pool)
         self.assertRaises(RedisConnectionError, redis_connection.echo, b'test')
 
     def test_independence(self) -> None:
         """
-        Instances of RedisQueue shall be independent.
+        Instances of RedisQueueConfiguration shall be independent.
 
         Creating one with a socket and one without.
         """
@@ -316,8 +316,8 @@ class RedisQueueTest(TestCase):
             'socket': '/var/run/redis-test.sock',
             'auth': 'supersecret1',
         }
-        rq1 = RedisQueue(config_one)
-        rq2 = RedisQueue(config_two)
+        rq1 = RedisQueueConfiguration(config_one)
+        rq2 = RedisQueueConfiguration(config_two)
         self.assertNotEqual(rq1, rq2)
         url1 = rq1.build_url()
         url2 = rq2.build_url()
@@ -330,7 +330,7 @@ class RedisQueueTest(TestCase):
         config = {
             'queue': 'PYTTS_TEST_QUEUE-0',
         }
-        redis_queue = RedisQueue(config)
+        redis_queue = RedisQueueConfiguration(config)
         self.assertEqual(
             'PYTTS_TEST_QUEUE-0',
             redis_queue.queue
@@ -346,8 +346,8 @@ class RedisQueueTest(TestCase):
         config_two = {
             'queue': 'PYTTS_TEST_QUEUE-02',
         }
-        redis_queue_one = RedisQueue(config_one)
-        redis_queue_two = RedisQueue(config_two)
+        redis_queue_one = RedisQueueConfiguration(config_one)
+        redis_queue_two = RedisQueueConfiguration(config_two)
         self.assertEqual(
             'PYTTS_TEST_QUEUE-01',
             redis_queue_one.queue
