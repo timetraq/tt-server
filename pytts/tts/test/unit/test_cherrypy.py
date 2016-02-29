@@ -57,4 +57,4 @@ class BasicServerTest(TestCase):
         connection.close()
         self.assertEqual(302, response.code)
         self.assertIn('Location', response.headers)
-        self.assertEqual('static/index.html', response.headers['Location'])
+        self.assertEqual('static/index.xhtml', response.headers['Location'])

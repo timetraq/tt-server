@@ -19,6 +19,6 @@ class StaticServer(object):
         :return: Redirect to index web page
         """
         response = cherrypy.response
-        response.headers['Location'] = 'static/index.html'
+        response.headers['Location'] = 'static/index.xhtml'
         response.status = 302
         return ['Moved Temporarily']
