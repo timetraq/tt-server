@@ -287,7 +287,7 @@ class RedisQueueConfigurationTest(TestCase):
         )
         del redis_connection
 
-    @pytest.mark.timeout(15)
+    @pytest.mark.timeout(30)
     def test_connection_pool_with_invalid_settings(self) -> None:
         """
         Use invalid settings to check the Connection Pool creation

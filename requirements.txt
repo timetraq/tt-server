@@ -1,4 +1,5 @@
 astroid==1.4.4
+CherryPy==5.0.1
 colorama==0.3.6
 coverage==4.0.3
 lazy-object-proxy==1.2.1

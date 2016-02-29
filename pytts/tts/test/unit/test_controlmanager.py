@@ -80,6 +80,13 @@ class ControlManagerInitializationTest(TestCase):
         control_manager = ControlManager.factory()
         self.assertRaises(RuntimeError, control_manager.configure)
 
+    def test_queue_alive(self) -> None:
+        """
+        Test if the command queue is set to be alive
+        """
+        control_manager = ControlManager.factory()
+        self.assertTrue(control_manager.command_handler.should_run)
+
 
 class ControlManagerStopTest(TestCase):
     """
@@ -110,6 +117,12 @@ class ControlManagerStopTest(TestCase):
         sleep(2)
         SingletonMeta.delete(ControlManager)
 
+    def util_check_stopped(self) -> None:
+        """
+        Check if the system is stopped
+        """
+        self.assertFalse(ControlManager().command_handler.should_run)
+
     def test_stop_command_via_direct_call(self) -> None:
         """
         Call the stop method directly
@@ -117,7 +130,7 @@ class ControlManagerStopTest(TestCase):
         ControlManager.factory(list())
         self.assertTrue(ControlManager().command_handler.should_run)
         ControlManager().stop()
-        self.assertFalse(ControlManager().command_handler.should_run)
+        self.util_check_stopped()
 
     def test_stop_command_via_manage_call(self) -> None:
         """
@@ -126,7 +139,7 @@ class ControlManagerStopTest(TestCase):
         ControlManager.factory(list())
         self.assertTrue(ControlManager().command_handler.should_run)
         ControlManager().manage(b'STOP')
-        self.assertFalse(ControlManager().command_handler.should_run)
+        self.util_check_stopped()
 
     def test_stop_command_via_queue(self):
         """
@@ -139,4 +152,141 @@ class ControlManagerStopTest(TestCase):
         redis.rpush(rqc.queue, 'STOP')
         redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
         sleep(1)
-        self.assertFalse(ControlManager().command_handler.should_run)
+        self.util_check_stopped()
+
+
+class ControlManagerStartTest(TestCase):
+    """
+    Test how the control manager main command queue can be stopped
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Setup the test class
+        """
+        SingletonMeta.delete(ConfigurationFileFinder)
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """
+        Clean up singleton instances of the Configuration File Finder and clear the database
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(cls.__config).create_redis_connection_pool()).flushdb()
+        SingletonMeta.delete(ConfigurationFileFinder)
+
+    def tearDown(self) -> None:
+        """
+        Delete existing singleton instance of the Control Manager - clean up!
+        """
+        ControlManager().stop()
+        sleep(2)
+        SingletonMeta.delete(ControlManager)
+
+    def test_start_command_via_direct_call(self) -> None:
+        """
+        Call the stop method directly
+        """
+        ctrl_man = ControlManager.factory(list())
+        ctrl_man.start()
+        self.assertTrue(ctrl_man.server.running)
+
+    def test_start_command_via_manage_call(self) -> None:
+        """
+        Call the stop method via manage call
+        """
+        ctrl_man = ControlManager.factory(list())
+        ctrl_man.manage(b'START')
+        self.assertTrue(ctrl_man.server.running)
+
+    def test_start_command_via_queue(self):
+        """
+        Call the stop via queue command
+        """
+        ControlManager.factory(list())
+        rqc = RedisQueueConfiguration(self.__config)
+        redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
+        redis.rpush(rqc.queue, 'START')
+        redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
+        sleep(1)
+        self.assertTrue(ControlManager().server.running)
+
+
+class ControlManagerStartStopSequenceTest(TestCase):
+    """
+    Test a complete sequence of starting up and shutting down
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Setup the test class
+        """
+        SingletonMeta.delete(ConfigurationFileFinder)
+        cls.__config = ConfigurationFileFinder().find_as_json()['tts']['queues']['command']
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """
+        Clean up singleton instances of the Configuration File Finder and clear the database
+        """
+        StrictRedis(connection_pool=RedisQueueConfiguration(cls.__config).create_redis_connection_pool()).flushdb()
+        SingletonMeta.delete(ConfigurationFileFinder)
+
+    def tearDown(self) -> None:
+        """
+        Delete existing singleton instance of the Control Manager - clean up!
+        """
+        ControlManager().stop()
+        sleep(2)
+        SingletonMeta.delete(ControlManager)
+
+    def test_start_stop_sequence(self):
+        """
+        Test a full start up and shut down sequence
+        :return:
+        """
+        ctrl_manager = ControlManager.factory(list())
+        self.assertTrue(ctrl_manager.command_handler.should_run)
+        self.assertIsNone(ctrl_manager.server)
+        self.assertIsNone(ctrl_manager.engine)
+        ctrl_manager.start()
+        self.assertIsNotNone(ctrl_manager.server)
+        self.assertIsNotNone(ctrl_manager.engine)
+        self.assertTrue(ctrl_manager.server.running)
+        ctrl_manager.stop()
+        self.assertFalse(ctrl_manager.server.running)
+
+
+class ControlManagerErrorBehaviourTest(TestCase):
+    """
+    Test what happens when you treat the ControlManager badly
+    """
+
+    def tearDown(self):
+        """
+        Remove the control manager
+        """
+        ControlManager().stop()
+        sleep(2)
+        SingletonMeta.delete(ControlManager)
+
+    def setUp(self):
+        """
+        Fresh control manager
+        """
+        ControlManager.factory(list())
+
+    def test_double_start_command(self):
+        """
+        Try to start the service twice
+        """
+        ControlManager().start()
+        self.assertRaises(SystemError, ControlManager().start)
+
+    def test_invalid_command(self):
+        """
+        Send an invalid command to the manager
+        """
+        self.assertRaises(SyntaxError, ControlManager().manage, b'INVALID')
