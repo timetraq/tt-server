@@ -6,6 +6,7 @@ from os import path
 
 import cherrypy
 
+from ..api.server import REST_APPLICATION
 from ..app.server import StaticServer
 from ..util.config import ConfigurationFileFinder
 from ..util.queue.redis import RedisQueueConsumer, RedisQueueAccess
@@ -105,6 +106,7 @@ class ControlManager(object, metaclass=SingletonMeta):
                 },
             },
         })
+        cherrypy.tree.graft(REST_APPLICATION, '/api')
         self.server = cherrypy.server
         self.server.socket_host = '127.0.0.1'
         self.server.socket_port = 8080
