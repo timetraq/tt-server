@@ -114,7 +114,7 @@ class ControlManagerStopTest(TestCase):
         Delete existing singleton instance of the Control Manager - clean up!
         """
         ControlManager().stop()
-        sleep(2)
+        sleep(5)
         SingletonMeta.delete(ControlManager)
 
     def util_check_stopped(self) -> None:
@@ -151,7 +151,7 @@ class ControlManagerStopTest(TestCase):
         redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
         redis.rpush(rqc.queue, 'STOP')
         redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
-        sleep(3)
+        sleep(5)
         self.util_check_stopped()
 
 
@@ -181,7 +181,7 @@ class ControlManagerStartTest(TestCase):
         Delete existing singleton instance of the Control Manager - clean up!
         """
         ControlManager().stop()
-        sleep(2)
+        sleep(5)
         SingletonMeta.delete(ControlManager)
 
     def test_start_command_via_direct_call(self) -> None:
@@ -209,7 +209,7 @@ class ControlManagerStartTest(TestCase):
         redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
         redis.rpush(rqc.queue, 'START')
         redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
-        sleep(3)
+        sleep(5)
         self.assertTrue(ControlManager().server.running)
 
 
