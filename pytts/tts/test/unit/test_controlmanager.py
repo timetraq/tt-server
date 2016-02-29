@@ -204,13 +204,13 @@ class ControlManagerStartTest(TestCase):
         """
         Call the stop via queue command
         """
-        ControlManager.factory(list())
+        ctrl_man = ControlManager.factory(list())
         rqc = RedisQueueConfiguration(self.__config)
         redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
         redis.rpush(rqc.queue, 'START')
         redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
         sleep(5)
-        self.assertTrue(ControlManager().server.running)
+        self.assertTrue(ctrl_man.server.running)
 
 
 class ControlManagerStartStopSequenceTest(TestCase):
