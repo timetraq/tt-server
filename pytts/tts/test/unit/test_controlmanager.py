@@ -151,7 +151,7 @@ class ControlManagerStopTest(TestCase):
         redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
         redis.rpush(rqc.queue, 'STOP')
         redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
-        sleep(1)
+        sleep(3)
         self.util_check_stopped()
 
 
@@ -209,7 +209,7 @@ class ControlManagerStartTest(TestCase):
         redis = StrictRedis(connection_pool=rqc.create_redis_connection_pool())
         redis.rpush(rqc.queue, 'START')
         redis.publish('{:s}_PUBSUB_CH'.format(rqc.queue), '1')
-        sleep(1)
+        sleep(3)
         self.assertTrue(ControlManager().server.running)
 
 
