@@ -21,7 +21,6 @@ class BasicFlaskResponseTest(TestCase):
         """
         cls.config = dict()
         prepare_test(cls)
-        cls.base_url = 'http://{:s}:{:d}/api'.format(cls.config['bind_ip'], cls.config['bind_port'])
 
     @classmethod
     def tearDownClass(cls):
