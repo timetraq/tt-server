@@ -4,6 +4,8 @@ Flask API entry point
 
 from flask import Flask, jsonify
 
+from .auth.login import LoginStatusAPI
+
 
 REST_APPLICATION = Flask(__name__)
 
@@ -16,3 +18,6 @@ def get_version():
     :return: JSONified version
     """
     return jsonify({'version': '1.0'})
+
+
+LoginStatusAPI().mount('/v1.0/login', REST_APPLICATION)

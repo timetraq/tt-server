@@ -11,4 +11,10 @@ class MountableAPI(object):
     """
 
     def mount(self, namespace: str, application: Flask) -> None:
+        """
+
+        :param namespace: The mount point namespace
+        :param application: The flask application
+        :raises NotImplementedError: when not implemented
+        """
         raise NotImplementedError
