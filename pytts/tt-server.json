@@ -19,6 +19,15 @@
     "server": {
       "bind_ip": "127.0.0.1",
       "bind_port": 8080
+    },
+    "database": {
+      "connection_url": "sqlite:///{{CONFIG_DIR}}/pytts.sqlite.db",
+      "pool_size": 25,
+      "max_overflow": 5
+    },
+    "testDatabase": {
+      "connection_url": "sqlite:///:memory:",
+      "pool_size": 5
     }
   }
 }

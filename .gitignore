@@ -6,3 +6,5 @@ __pycache__/
 virtualenv/
 .coverage
 .cache/
+*.sqlite.db
+
