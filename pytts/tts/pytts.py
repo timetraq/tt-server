@@ -9,4 +9,4 @@ from tts.control import manager
 
 
 if __name__ == '__main__':
-    manager.ControlManager.factory(sys.argv).start()
+    manager.ControlManager.factory(sys.argv)

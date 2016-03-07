@@ -5,7 +5,6 @@ Test Presence of Redis
 from unittest import TestCase
 import redis
 from ...util.config import ConfigurationFileFinder
-from ...util.singleton import SingletonMeta
 
 
 class RedisSmokeTest(TestCase):
@@ -59,8 +58,6 @@ class RedisSmokeTest(TestCase):
         Close the redis pool
         """
         del cls.__redis_pool
-        del cls.__config
-        SingletonMeta.delete(ConfigurationFileFinder)
 
     def test_smoke(self):
         """
