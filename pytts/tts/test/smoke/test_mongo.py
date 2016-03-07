@@ -4,6 +4,8 @@ Test Presence of Mongo
 
 from unittest import TestCase
 from pymongo import MongoClient
+from pymongo.database import Database
+
 from ..lib.smoke import fetch_configuration
 from ...util.config import ConfigurationFileFinder
 from ...util.singleton import SingletonMeta
@@ -29,6 +31,7 @@ class MongoSmokeTest(TestCase):
         assert 'test' in collections
         test = collections['test']
         assert isinstance(test, str)
+        cls.__collection_name = test
         cls.__client = MongoClient(url)
 
     @classmethod
@@ -38,6 +41,7 @@ class MongoSmokeTest(TestCase):
         """
         cls.__client.close()
         del cls.__client
+        del cls.__collection_name
         del cls.__config
         SingletonMeta.delete(ConfigurationFileFinder)
 
@@ -47,3 +51,12 @@ class MongoSmokeTest(TestCase):
         """
         info = self.__client.server_info()
         self.assertIn('version', info)
+
+    def test_collection(self):
+        """
+        See if I can have access to the test collection
+        """
+        collection = self.__client[self.__collection_name]
+        self.assertIsNotNone(collection)
+        self.assertIsInstance(collection, Database)
+        self.assertEqual(self.__collection_name, collection.name)
