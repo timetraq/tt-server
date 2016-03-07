@@ -48,4 +48,3 @@ class DbAccess(metaclass=SingletonMeta):
         if self.__pool_engine is not None:
             self.__pool_engine.dispose()
             del self.__pool_engine
-

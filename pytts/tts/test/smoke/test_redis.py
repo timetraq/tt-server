@@ -62,7 +62,7 @@ class RedisSmokeTest(TestCase):
         del cls.__config
         SingletonMeta.delete(ConfigurationFileFinder)
 
-    def test_connection(self):
+    def test_smoke(self):
         """
         Simple Echo Test
         """
