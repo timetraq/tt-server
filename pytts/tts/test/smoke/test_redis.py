@@ -4,6 +4,7 @@ Test Presence of Redis
 
 from unittest import TestCase
 import redis
+from ..lib.smoke import fetch_configuration
 from ...util.config import ConfigurationFileFinder
 from ...util.singleton import SingletonMeta
 
@@ -22,14 +23,9 @@ class RedisSmokeTest(TestCase):
         #    rediss://[:password]@localhost:6379/0
         #    unix://[:password]@/path/to/socket.sock?db=0
         """
-        cls.__config = ConfigurationFileFinder().find_as_json()
-        assert cls.__config is not None
-        assert isinstance(cls.__config, dict)
-        assert 'tts' in cls.__config
-        tts = cls.__config['tts']
-        assert isinstance(tts, dict)
-        assert 'queues' in tts
-        queues = tts['queues']
+        cls.__config = fetch_configuration()
+        assert 'queues' in cls.__config
+        queues = cls.__config['queues']
         assert isinstance(queues, dict)
         assert 'test' in queues
         test = queues['test']

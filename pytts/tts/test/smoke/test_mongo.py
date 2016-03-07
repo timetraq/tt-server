@@ -4,6 +4,7 @@ Test Presence of Mongo
 
 from unittest import TestCase
 from pymongo import MongoClient
+from ..lib.smoke import fetch_configuration
 from ...util.config import ConfigurationFileFinder
 from ...util.singleton import SingletonMeta
 
@@ -15,14 +16,9 @@ class MongoSmokeTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.__config = ConfigurationFileFinder().find_as_json()
-        assert cls.__config is not None
-        assert isinstance(cls.__config, dict)
-        assert 'tts' in cls.__config
-        tts = cls.__config['tts']
-        assert isinstance(tts, dict)
-        assert 'database' in tts
-        database = tts['database']
+        cls.__config = fetch_configuration()
+        assert 'database' in cls.__config
+        database = cls.__config['database']
         assert isinstance(database, dict)
         assert 'url' in database
         url = database['url']
