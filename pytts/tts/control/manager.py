@@ -4,10 +4,12 @@ This holds stuff to manage our server instance
 
 from os import path
 
+from blackred import BlackRed
 import cherrypy
 
 from ..api.server import REST_APPLICATION
 from ..app.server import StaticServer
+from ..core.dispatcher import CoreDispatcher
 from ..util.config import ConfigurationFileFinder
 from ..util.queue.redis import RedisQueueConsumer, RedisQueueAccess
 from ..util.singleton import SingletonMeta
@@ -23,11 +25,38 @@ class ControlManager(object, metaclass=SingletonMeta):
     server = None
     engine = None
 
+    @staticmethod
+    def __configure_blackred():
+        """
+        Configure BlackRed Instance from configuration file
+        """
+        BlackRed.Settings.ANONYMIZATION = False
+        config = ConfigurationFileFinder().find_as_json()
+        if 'tts' not in config:
+            return
+        if 'blackred' not in config['tts']:
+            return
+        blackred_config = config['tts']['blackred']
+        if 'socket' in blackred_config and blackred_config['socket'] is not None:
+            BlackRed.Settings.REDIS_HOST = blackred_config['socket']
+            BlackRed.Settings.REDIS_USE_SOCKET = True
+        elif 'host' in blackred_config and blackred_config['host'] is not None:
+            BlackRed.Settings.REDIS_HOST = blackred_config['host']
+            BlackRed.Settings.REDIS_USE_SOCKET = False
+        if 'port' in blackred_config and blackred_config['port'] is not None:
+            BlackRed.Settings.REDIS_PORT = blackred_config['port']
+        if 'auth' in blackred_config and blackred_config['auth'] is not None:
+            BlackRed.Settings.REDIS_AUTH = blackred_config['auth']
+        if 'db' in blackred_config and blackred_config['db'] is not None:
+            BlackRed.Settings.REDIS_DB = blackred_config['db']
+
     def __init__(self, no_init: bool=False) -> None:
         """
         Initialize with default settings
         :param bool no_init: Do not perform an initialization, because configuration is already on the way
         """
+        ControlManager.__configure_blackred()
+        CoreDispatcher()
         if no_init:
             return
         self.__initialized = True
