@@ -10,12 +10,12 @@ lazy-object-proxy==1.2.1
 MarkupSafe==0.23
 py==1.4.31
 pylint==1.5.4
+pymongo==3.2.1
 pytest==2.8.7
 pytest-cov==2.2.1
 pytest-timeout==1.0.0
 redis==2.10.5
 selenium==2.52.0
 six==1.10.0
-SQLAlchemy==1.0.12
 Werkzeug==0.11.4
 wrapt==1.10.6
