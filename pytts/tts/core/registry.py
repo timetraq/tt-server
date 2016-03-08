@@ -2,7 +2,9 @@
 Implementation Registry of exported functions
 """
 
+from .prog.registration import FUNCTIONS as REGISTRATION
+
+
 FUNCTIONS = {
-    'login:authenticate': lambda x: x,
-    'login:status': lambda x: x,
+    **REGISTRATION,
 }

@@ -6,18 +6,19 @@ from flask import Flask, jsonify, request
 from werkzeug.exceptions import BadRequest
 
 from ..base.mountable import MountableAPI
+from ...core.rules import RULE_USERNAME, RULE_PASSWORD, RULE_TOKEN
 
 
-class LoginStatusAPI(MountableAPI):
+class LoginAPI(MountableAPI):
     """
-    API for creating User Sessions
+    API for creating and managing User Sessions
     """
 
     def __init__(self):
         """
         Prepare dispatching queue
         """
-        super(LoginStatusAPI, self).__init__()
+        super(LoginAPI, self).__init__()
 
     def mount(self, namespace: str, application: Flask) -> None:
         """
@@ -46,9 +47,9 @@ class LoginStatusAPI(MountableAPI):
             raise BadRequest()
         username = json_data['username']
         password = json_data['password']
-        if 0 >= len(username) > 255:
+        if not RULE_USERNAME.match(username):
             raise BadRequest()
-        if 0 >= len(password) > 1024:
+        if not RULE_PASSWORD.match(password):
             raise BadRequest()
         return jsonify(self.queue_dispatcher({
             '_': 'login:authenticate',
@@ -72,7 +73,7 @@ class LoginStatusAPI(MountableAPI):
         if not isinstance(json_data['token'], str):
             raise BadRequest()
         token = json_data['token']
-        if 0 >= len(token) > 255:
+        if not RULE_TOKEN.match(token):
             raise BadRequest()
         return jsonify(self.queue_dispatcher({
             '_': 'login:status',

@@ -34,11 +34,18 @@
         "test": "test"
       }
     },
+    "registration": {
+      "host": "localhost",
+      "port": 6379,
+      "socket": null,
+      "db": 2,
+      "lifetime": 300
+    },
     "blackred": {
       "host": "localhost",
       "port": 6379,
       "socket": null,
-      "db": 2
+      "db": 3
     }
   }
 }

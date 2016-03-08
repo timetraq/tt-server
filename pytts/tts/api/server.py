@@ -4,10 +4,13 @@ Flask API entry point
 
 from blackred import BlackRed
 from flask import Flask, jsonify, request
-from werkzeug.exceptions import Unauthorized
+from werkzeug.exceptions import Unauthorized, BadRequest, MethodNotAllowed
 
-from .auth.login import LoginStatusAPI
+from .auth.registration import RegistrationAPI
+from .auth.login import LoginAPI
 
+
+__version__ = '1.0'
 
 REST_APPLICATION = Flask(__name__)
 BLACKRED = BlackRed()
@@ -20,7 +23,7 @@ def get_version():
 
     :return: JSONified version
     """
-    return jsonify({'version': '1.0'})
+    return jsonify({'version': __version__})
 
 
 @REST_APPLICATION.before_request
@@ -34,4 +37,23 @@ def check_blackred():
         raise Unauthorized()
 
 
-LoginStatusAPI().mount('/v1.0/login', REST_APPLICATION)
+@REST_APPLICATION.before_request
+def check_request():
+    """
+    Check if the request is a JSON one on POST and uses only allowed methods
+    :raises BadRequest: When post contains no JSON
+    :raises MethodNotAllowed: When not GET or POST is used
+    """
+    if not any([request.method == 'GET', request.method == 'POST']):
+        raise MethodNotAllowed()
+    if request.method == 'POST':
+        try:
+            json_data = request.get_json()
+        except:
+            raise BadRequest()
+        if json_data is None:
+            raise BadRequest()
+
+
+LoginAPI().mount('/v{:s}/login'.format(__version__), REST_APPLICATION)
+RegistrationAPI().mount('/v{:s}/registration'.format(__version__), REST_APPLICATION)
