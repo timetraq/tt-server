@@ -89,8 +89,6 @@ class ControlManager(object, metaclass=SingletonMeta):
         if self.command_handler is not None:
             self.command_handler.stop()
         if self.server is not None:
-            self.engine.stop()
-            self.server.stop()
             self.server.bus.exit()
 
     def start(self):
@@ -113,6 +111,9 @@ class ControlManager(object, metaclass=SingletonMeta):
         for csp_source in csp_sources:
             csp_rules.append('{:s}-src {:s}'.format(csp_source, csp_default_source))
         csp = '; '.join(csp_rules)
+        cherrypy.config.update({
+            'engine.autoreload.on': False,
+        })
         cherrypy.tree.mount(StaticServer(), '/', config={
             '/static': {
                 'tools.staticdir.on': True,
