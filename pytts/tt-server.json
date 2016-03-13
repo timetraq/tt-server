@@ -29,8 +29,9 @@
     },
     "database": {
       "url": "mongodb://localhost:27017/",
+      "database": "timetraq",
       "collections": {
-        "timetraq": "timetraq",
+        "users": "users",
         "test": "test"
       }
     },

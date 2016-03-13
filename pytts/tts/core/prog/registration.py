@@ -3,10 +3,12 @@ Registration Handling
 """
 
 from json import dumps, loads
+import re
 from uuid import uuid4
 
 from redis import StrictRedis
 
+from ...core.lib.db import UserDatabaseConnectivity
 from ...core.token import token_generator
 from ...util.config import ConfigurationFileFinder
 from ...util.redis import RedisConfiguration
@@ -23,6 +25,7 @@ class Registration(RedisConfiguration):
         """
         configuration = ConfigurationFileFinder().find_as_json()['tts']['registration']
         super(Registration, self).__init__(configuration)
+        self.__user_db = UserDatabaseConnectivity()
         self.__connection_pool = self.create_redis_connection_pool()
         self.__expiration_time = 3600
         if 'lifetime' in configuration:
@@ -55,7 +58,7 @@ class Registration(RedisConfiguration):
 
     def choose_username(self, data: dict) -> dict:
         """
-        Preparation Step
+        Username selection Step
 
         :param data: Incoming Data
         :return: Response Data
@@ -77,7 +80,15 @@ class Registration(RedisConfiguration):
         internal_data = {}
         if all(['data' in state, isinstance(state['data'], dict)]):
             internal_data = state['data']
-        internal_data['username'] = data['username']
+        username_to_check = data['username']
+        step = 1
+        suc = self.__user_db.collection
+        user_obj = suc.find_one({
+            'username': re.compile('^' + re.escape(username_to_check) + '$', re.IGNORECASE),
+        })
+        if user_obj is None:
+            internal_data['username'] = username_to_check
+            step = 2
         new_key = str(uuid4())
         new_token = token_generator()
         save_back = {
@@ -85,14 +96,22 @@ class Registration(RedisConfiguration):
             'key': new_key,
             'data': internal_data,
             'token': new_token,
-            'step': 2,
+            'step': step,
         }
         redis.set('REG_{:s}'.format(new_key), dumps(save_back), ex=self.__expiration_time)
-        return {
-            'registration_key': new_key,
-            'token': new_token,
-            'username': data['username'],
-        }
+        if step == 1:
+            return {
+                'registration_key': new_key,
+                'token': new_token,
+                'username_message': 'username_not_available',
+            }
+        else:
+            return {
+                'registration_key': new_key,
+                'token': new_token,
+                'username_message': 'username_available',
+                'username': username_to_check,
+            }
 
     def export(self) -> dict:
         """

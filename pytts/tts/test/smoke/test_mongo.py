@@ -25,12 +25,16 @@ class MongoSmokeTest(TestCase):
         assert 'url' in database
         url = database['url']
         assert isinstance(url, str)
+        assert 'database' in database
+        db = database['datavase']
+        assert isinstance(db, str)
         assert 'collections' in database
         collections = database['collections']
         assert isinstance(collections, dict)
         assert 'test' in collections
         test = collections['test']
         assert isinstance(test, str)
+        cls.__database_name = db
         cls.__collection_name = test
         cls.__client = MongoClient(url)
 
@@ -56,7 +60,7 @@ class MongoSmokeTest(TestCase):
         """
         See if I can have access to the test collection
         """
-        collection = self.__client[self.__collection_name]
-        self.assertIsNotNone(collection)
-        self.assertIsInstance(collection, Database)
-        self.assertEqual(self.__collection_name, collection.name)
+        xdb = self.__client[self.__database_name]
+        self.assertIsNotNone(xdb)
+        self.assertIsInstance(xdb, Database)
+        self.assertEqual(self.__database_name, xdb.name)
