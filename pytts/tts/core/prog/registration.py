@@ -9,6 +9,7 @@ from uuid import uuid4
 from redis import StrictRedis
 
 from ...core.lib.db import UserDatabaseConnectivity
+from ...core.lib.hash import hash_password_with_base64_salt_as_base64_string, create_salt_as_base64_string
 from ...core.token import token_generator
 from ...util.config import ConfigurationFileFinder
 from ...util.redis import RedisConfiguration
@@ -56,6 +57,12 @@ class Registration(RedisConfiguration):
             'token': token,
         }
 
+    def __get_key(self, key) -> (str, bytes):
+        key_x = 'REG_{:s}'.format(key)
+        redis = StrictRedis(connection_pool=self.__connection_pool)
+        state = redis.get(key_x)
+        return key_x, state, redis
+
     def choose_username(self, data: dict) -> dict:
         """
         Username selection Step
@@ -64,9 +71,7 @@ class Registration(RedisConfiguration):
         :return: Response Data
         :rtype: dict
         """
-        key = 'REG_{:s}'.format(data['registration_key'])
-        redis = StrictRedis(connection_pool=self.__connection_pool)
-        state = redis.get(key)
+        key, state, redis = self.__get_key(data['registration_key'])
         if state is None:
             return {'error': {'code': -10001, 'message': 'invalid_registration_key'}}
         state = loads(state.decode('utf-8'), encoding='utf-8')
@@ -113,6 +118,46 @@ class Registration(RedisConfiguration):
                 'username': username_to_check,
             }
 
+    def set_password(self, data: dict) -> dict:
+        """
+        Set the password for the new user
+
+        :param data: Data from the outside
+        :return: result data
+        :rtype: dict
+        """
+        key, state, redis = self.__get_key(data['registration_key'])
+        if state is None:
+            return {'error': {'code': -10001, 'message': 'invalid_registration_key'}}
+        state = loads(state.decode('utf-8'), encoding='utf-8')
+        if any(['step' not in state, state['step'] != 2]):
+            return {'error': {'code': -10002, 'message': 'invalid_registration_step'}}
+        redis.delete(key)
+        if any(['token' not in state, state['token'] != data['token']]):
+            return {'error': {'code': -10003, 'message': 'invalid_registration_token'}}
+        if any(['ip' not in state, state['ip'] != data['ip']]):
+            return {'error': {'code': -10004, 'message': 'access_denied'}}
+        salt = create_salt_as_base64_string()
+        pw_hash = hash_password_with_base64_salt_as_base64_string(data['password'], salt)
+        user_document = {
+            'username': state['data']['username'],
+            'salt': salt,
+            'password': pw_hash,
+            'enabled': False,
+        }
+        suc = self.__user_db.collection
+        user_obj = suc.find_one({
+            'username': re.compile('^' + re.escape(state['data']['username']) + '$', re.IGNORECASE),
+        })
+        if user_obj is not None:
+            return {'error': {'code': -10005, 'message': 'registration_failed_username_already_taken'}}
+        suc.insert(user_document)
+        return {
+            'message': 'registration_successful',
+            'account_enabled': False,
+            'username': state['data']['username'],
+        }
+
     def export(self) -> dict:
         """
         Export functions
@@ -123,6 +168,7 @@ class Registration(RedisConfiguration):
         return {
             'registration:prepare': self.prepare,
             'registration:choose_username': self.choose_username,
+            'registration:set_password': self.set_password,
         }
 
 

@@ -66,3 +66,14 @@ class MountableAPI(object):
                 }
             }
         return loads(message['data'].decode('utf-8'), encoding='utf-8')
+
+    @staticmethod
+    def get_ip(request) -> str:
+        """
+        Get the IP address – helps to implement a new method when needed
+
+        :param request: Request Object
+        :return: IP Address
+        :rtype: str
+        """
+        return request.remote_addr

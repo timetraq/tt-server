@@ -6,7 +6,7 @@ from flask import Flask, jsonify, request
 from werkzeug.exceptions import BadRequest
 
 from ..base.mountable import MountableAPI
-from ...core.rules import RULE_USERNAME, RULE_TOKEN, RULE_UUID
+from ...core.rules import RULE_USERNAME, RULE_TOKEN, RULE_UUID, RULE_PASSWORD
 
 
 class RegistrationAPI(MountableAPI):
@@ -32,6 +32,9 @@ class RegistrationAPI(MountableAPI):
         choose_username_endpoint = '{:s}/choose_username'.format(namespace)
         application.add_url_rule(choose_username_endpoint, choose_username_endpoint,
                                  self.choose_username, methods=('POST',))
+        set_password_endpoint = '{:s}/set_password'.format(namespace)
+        application.add_url_rule(set_password_endpoint, set_password_endpoint,
+                                 self.set_password, methods=('POST',))
 
     def prepare(self):
         """
@@ -42,7 +45,7 @@ class RegistrationAPI(MountableAPI):
         return jsonify(self.queue_dispatcher({
             '_': 'registration:prepare',
             'data': {
-                'ip': request.remote_addr,
+                'ip': MountableAPI.get_ip(request),
             },
         }))
 
@@ -53,25 +56,51 @@ class RegistrationAPI(MountableAPI):
         :return: JSON response
         """
         json_data = request.get_json()
-        if any([
-                json_data is None,
-                'token' not in json_data,
-                'username' not in json_data,
-                'registration_key' not in json_data,
-                not isinstance(json_data['token'], str),
-                not isinstance(json_data['username'], str),
-                not isinstance(json_data['registration_key'], str),
-                not RULE_TOKEN.match(json_data['token']),
-                not RULE_USERNAME.match(json_data['username']),
-                not RULE_UUID.match(json_data['registration_key']),
-        ]):
+        if json_data is None \
+            or 'token' not in json_data \
+            or 'username' not in json_data \
+            or 'registration_key' not in json_data \
+            or not isinstance(json_data['token'], str) \
+            or not isinstance(json_data['username'], str) \
+            or not isinstance(json_data['registration_key'], str) \
+            or not RULE_TOKEN.match(json_data['token']) \
+            or not RULE_USERNAME.match(json_data['username']) \
+                or not RULE_UUID.match(json_data['registration_key']):
             raise BadRequest()
         return jsonify(self.queue_dispatcher({
             '_': 'registration:choose_username',
             'data': {
                 'registration_key': json_data['registration_key'],
                 'token': json_data['token'],
-                'ip': request.remote_addr,
+                'ip': MountableAPI.get_ip(request),
                 'username': json_data['username'],
+            }
+        }))
+
+    def set_password(self):
+        """
+        Set a password for the newly created user
+
+        :return: JSON response
+        """
+        json_data = request.get_json()
+        if json_data is None \
+            or 'token' not in json_data \
+            or 'registration_key' not in json_data \
+            or 'password' not in json_data \
+            or not isinstance(json_data['token'], str) \
+            or not isinstance(json_data['registration_key'], str) \
+            or not isinstance(json_data['password'], str) \
+            or not RULE_TOKEN.match(json_data['token']) \
+            or not RULE_UUID.match(json_data['registration_key']) \
+                or not RULE_PASSWORD.match(json_data['password']):
+            raise BadRequest()
+        return jsonify(self.queue_dispatcher({
+            '_': 'registration:set_password',
+            'data': {
+                'registration_key': json_data['registration_key'],
+                'token': json_data['token'],
+                'ip': MountableAPI.get_ip(request),
+                'password': json_data['password']
             }
         }))
