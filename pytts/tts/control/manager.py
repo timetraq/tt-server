@@ -10,6 +10,7 @@ import cherrypy
 from ..api.server import REST_APPLICATION
 from ..app.server import StaticServer
 from ..core.dispatcher import CoreDispatcher
+from ..core.lib.db import UserDatabaseConnectivity
 from ..util.config import ConfigurationFileFinder
 from ..util.queue.redis import RedisQueueConsumer, RedisQueueAccess
 from ..util.singleton import SingletonMeta
@@ -50,12 +51,20 @@ class ControlManager(object, metaclass=SingletonMeta):
         if 'db' in blackred_config and blackred_config['db'] is not None:
             BlackRed.Settings.REDIS_DB = blackred_config['db']
 
+    @staticmethod
+    def __configure_mongo() -> None:
+        coll = UserDatabaseConnectivity().collection
+        coll.create_index([
+            ('username', 1),
+        ], unique=True)
+
     def __init__(self, no_init: bool=False) -> None:
         """
         Initialize with default settings
         :param bool no_init: Do not perform an initialization, because configuration is already on the way
         """
         ControlManager.__configure_blackred()
+        ControlManager.__configure_mongo()
         CoreDispatcher()
         if no_init:
             return
