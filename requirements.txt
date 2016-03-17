@@ -15,6 +15,7 @@ pytest==2.8.7
 pytest-cov==2.2.1
 pytest-timeout==1.0.0
 redis==2.10.5
+requests==2.9.1
 selenium==2.52.0
 six==1.10.0
 Werkzeug==0.11.4

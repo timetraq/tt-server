@@ -6,6 +6,7 @@ from blackred import BlackRed
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import Unauthorized, BadRequest, MethodNotAllowed
 
+from .admin.user import UserManagementAPI
 from .auth.registration import RegistrationAPI
 from .auth.login import LoginAPI
 
@@ -55,5 +56,6 @@ def check_request():
             raise BadRequest()
 
 
+UserManagementAPI().mount('/v{:s}/admin'.format(__version__), REST_APPLICATION)
 LoginAPI().mount('/v{:s}/login'.format(__version__), REST_APPLICATION)
 RegistrationAPI().mount('/v{:s}/registration'.format(__version__), REST_APPLICATION)
