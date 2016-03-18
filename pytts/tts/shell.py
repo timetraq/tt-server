@@ -4,9 +4,11 @@ Create an interactive shell to control the server
 """
 
 from cmd import Cmd
+from getpass import getpass
 import requests
 from redis import StrictRedis
 
+from tts.core.rules import RULE_PASSWORD
 from tts.core.token import token_generator
 from tts.util.queue.redis import RedisQueueProducer
 from tts.util.config import ConfigurationFileFinder
@@ -57,13 +59,44 @@ class PyTTSShell(Cmd):
 
     def do_enable_user(self, arg):
         """
-        Activates a already created user account
+        Activates an already created user account
         """
         if arg is None or not isinstance(arg, str) or len(arg.strip()) <= 0:
             print('Usage: enable_user <username>')
             return
         print(self.__webservice_access('enable_user', {
            'username': arg.strip(),
+        }))
+
+    def do_disable_user(self, arg):
+        """
+        Disable an already created user account
+        """
+        if arg is None or not isinstance(arg, str) or len(arg.strip()) <= 0:
+            print('Usage: disable_user <username>')
+            return
+        print(self.__webservice_access('disable_user', {
+           'username': arg.strip(),
+        }))
+
+    def do_set_password(self, arg):
+        """
+        Set the password for a user
+        """
+        if arg is None or not isinstance(arg, str) or len(arg.strip()) <= 0:
+            print('Usage: set_password <username>')
+            return
+        password1 = getpass('Password: ')
+        password2 = getpass('Repeat Password: ')
+        if password1 != password2:
+            print('Passwords do not match')
+            return
+        if not RULE_PASSWORD.match(password1):
+            print('Password does not meet the requirements')
+            return
+        print(self.__webservice_access('set_password', {
+            'username': arg.strip(),
+            'password': password1,
         }))
 
     def do_quit(self, arg):

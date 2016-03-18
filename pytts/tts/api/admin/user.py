@@ -35,8 +35,18 @@ class UserManagementAPI(MountableAPI):
         """
         enable_user_endpoint = '{:s}/enable_user'.format(namespace)
         application.add_url_rule(enable_user_endpoint, enable_user_endpoint, self.enable_user, methods=('POST',))
+        disable_user_endpoint = '{:s}/disable_user'.format(namespace)
+        application.add_url_rule(disable_user_endpoint, disable_user_endpoint, self.disable_user, methods=('POST',))
+        set_password_endpoint = '{:s}/set_password'.format(namespace)
+        application.add_url_rule(set_password_endpoint, set_password_endpoint, self.set_password, methods=('POST',))
 
     def __admin_handler(self, endpoint: bytes):
+        """
+        Handle Admin Request
+
+        :param bytes endpoint: Endpoint (in bytes!)
+        :return: jsonified answer data
+        """
         json_data = request.get_json()
         if json_data is None:
             raise BadRequest()
@@ -72,3 +82,19 @@ class UserManagementAPI(MountableAPI):
         :return: JSON response
         """
         return self.__admin_handler(b'enable_user')
+
+    def disable_user(self):
+        """
+        Disable the user
+
+        :return: JSON response
+        """
+        return self.__admin_handler(b'disable_user')
+
+    def set_password(self):
+        """
+        Set a user's password
+
+        :return: JSON response
+        """
+        return self.__admin_handler(b'set_password')
