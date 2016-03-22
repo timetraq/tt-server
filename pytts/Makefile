@@ -1,15 +1,6 @@
 .PHONY: ci
 ci: clean test
 
-.PHONY: generate-standalone-test-script
-generate-standalone-test-script: clean-standalone-test-script
-	py.test -c pytest.rc --genscript=testrunner.py
-
-.PHONY: test-coverage
-test-coverage: generate-standalone-test-script
-	coverage run --rcfile=coverage.rc testrunner.py
-	rm -rf testrunner.py
-
 .PHONY: test
 test: test-pylint test-smoke test-pytest
 
@@ -34,11 +25,7 @@ test-pytest:
 	py.test -c pytest.rc
 
 .PHONY: clean
-clean: clean-standalone-test-script clean-pycache clean-pyc_pyo clean-test_cache clean-coverage clean-pylint_report
-
-.PHONY: clean-standalone-test-script
-clean-standalone-test-script:
-	rm -rf testrunner.py
+clean: clean-pycache clean-pyc_pyo clean-test_cache clean-coverage clean-pylint_report
 
 .PHONY: clean-pycache
 clean-pycache:
@@ -57,6 +44,8 @@ clean-test_cache:
 
 .PHONY: clean-coverage
 clean-coverage:
+	find -path '*/htmlcov/*' -not -path '*/virtualenv/*' -delete
+	find -name 'htmlconv' -not -path '*/virtualenv/*' -delete
 	find -name '.coverage' -not -path '*/virtualenv/*' -delete
 
 .PHONY: clean-pylint_report
