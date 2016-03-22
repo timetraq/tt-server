@@ -13,6 +13,9 @@ from ...util.redis import RedisConfiguration
 
 
 class UserManagementAPI(MountableAPI):
+    """
+    User Management API implementation
+    """
 
     api_redis = RedisConfiguration(
         configuration=ConfigurationFileFinder().find_as_json()['tts']['queues']['api']

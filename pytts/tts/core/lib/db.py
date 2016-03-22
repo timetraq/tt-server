@@ -48,6 +48,11 @@ class TestDatabaseConnectivity(MongoConnectivity):
 
     @property
     def collection(self):
+        """
+        The collection for tests
+
+        :return: The collection
+        """
         return self.__test_collection
 
 
@@ -65,4 +70,9 @@ class UserDatabaseConnectivity(MongoConnectivity):
 
     @property
     def collection(self):
+        """
+        The collection for users
+
+        :return: The collection
+        """
         return self.__user_collection

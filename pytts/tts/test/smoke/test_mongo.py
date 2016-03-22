@@ -26,15 +26,15 @@ class MongoSmokeTest(TestCase):
         url = database['url']
         assert isinstance(url, str)
         assert 'database' in database
-        db = database['datavase']
-        assert isinstance(db, str)
+        db_name = database['database']
+        assert isinstance(db_name, str)
         assert 'collections' in database
         collections = database['collections']
         assert isinstance(collections, dict)
         assert 'test' in collections
         test = collections['test']
         assert isinstance(test, str)
-        cls.__database_name = db
+        cls.__database_name = db_name
         cls.__collection_name = test
         cls.__client = MongoClient(url)
 

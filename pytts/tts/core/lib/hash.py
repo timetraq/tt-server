@@ -15,10 +15,10 @@ def create_salt() -> bytes:
     :rtype: bytes
     """
     rand = SystemRandom()
-    b = []
-    while len(b) < 64:
-        b.append(rand.randint(0, 255))
-    return bytes(b)
+    salt_bytes = []
+    while len(salt_bytes) < 64:
+        salt_bytes.append(rand.randint(0, 255))
+    return bytes(salt_bytes)
 
 
 def create_salt_as_base64_string() -> str:
@@ -41,7 +41,7 @@ def hash_password_with_salt(password: str, salt: bytes) -> bytes:
     :rtype: bytes
     """
     load = password.encode('utf-8')
-    for i in range(250000):
+    for dummy in range(250000):
         load += salt
         load = sha512(load).digest()
     return load
@@ -56,5 +56,5 @@ def hash_password_with_base64_salt_as_base64_string(password: str, salt: str) ->
     :return: Base 64 encoded salted hash of password
     :rtype: str
     """
-    s = b64decode(salt)
-    return b64encode(hash_password_with_salt(password, s)).decode('utf-8')
+    decoded_salt = b64decode(salt)
+    return b64encode(hash_password_with_salt(password, decoded_salt)).decode('utf-8')

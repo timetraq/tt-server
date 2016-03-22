@@ -42,14 +42,14 @@ class PyTTSShell(Cmd):
         my_token = token_generator()
         redis = StrictRedis(connection_pool=self.api_pool)
         redis.set('ADMIN_TOKEN:{:s}'.format(my_token), endpoint, ex=5)
-        r = requests.post('{:s}/{:s}'.format(self.API, endpoint), json={
+        request = requests.post('{:s}/{:s}'.format(self.API, endpoint), json={
             'admin_token': my_token,
             'data': data,
         })
-        r.close()
-        if not r.ok:
-            return 'ERR {:d}: {:s}'.format(r.status_code, r.reason)
-        return r.json()
+        request.close()
+        if not request.ok:
+            return 'ERR {:d}: {:s}'.format(request.status_code, request.reason)
+        return request.json()
 
     def do_stop(self, arg):
         """
@@ -65,7 +65,7 @@ class PyTTSShell(Cmd):
             print('Usage: enable_user <username>')
             return
         print(self.__webservice_access('enable_user', {
-           'username': arg.strip(),
+            'username': arg.strip(),
         }))
 
     def do_disable_user(self, arg):
@@ -76,7 +76,7 @@ class PyTTSShell(Cmd):
             print('Usage: disable_user <username>')
             return
         print(self.__webservice_access('disable_user', {
-           'username': arg.strip(),
+            'username': arg.strip(),
         }))
 
     def do_set_password(self, arg):

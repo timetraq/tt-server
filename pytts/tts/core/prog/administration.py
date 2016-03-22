@@ -8,6 +8,9 @@ from ..rules import RULE_USERNAME, RULE_PASSWORD
 
 
 class UserAdministration(object):
+    """
+    Implementation of user Administration
+    """
 
     def __init__(self):
         self.__user_db = UserDatabaseConnectivity()

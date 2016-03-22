@@ -1,3 +1,4 @@
+# pylint: disable=too-many-boolean-expressions
 """
 Contains everything for registration
 """
