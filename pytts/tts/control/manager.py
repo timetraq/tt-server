@@ -138,7 +138,8 @@ class ControlManager(object, metaclass=SingletonMeta):
                     ('X-Content-Type-Options', 'nosniff'),
                 ],
                 'tools.staticdir.content_types': {
-                    'html': 'application/xhtml+xml; charset=utf-8',
+                    'xhtml': 'application/xhtml+xml; charset=utf-8',
+                    'html': 'text/html; charset=utf-8',
                     'js': 'application/javascript; charset=utf-8',
                     'css': 'text/css; charset=utf-8',
                     'png': 'image/png',
