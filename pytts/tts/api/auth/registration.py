@@ -1,9 +1,9 @@
-# pylint: disable=too-many-boolean-expressions
 """
 Contains everything for registration
 """
 
 from flask import Flask, jsonify, request
+from laa import lazy_any
 from werkzeug.exceptions import BadRequest
 
 from ..base.mountable import MountableAPI
@@ -57,16 +57,18 @@ class RegistrationAPI(MountableAPI):
         :return: JSON response
         """
         json_data = request.get_json()
-        if json_data is None \
-            or 'token' not in json_data \
-            or 'username' not in json_data \
-            or 'registration_key' not in json_data \
-            or not isinstance(json_data['token'], str) \
-            or not isinstance(json_data['username'], str) \
-            or not isinstance(json_data['registration_key'], str) \
-            or not RULE_TOKEN.match(json_data['token']) \
-            or not RULE_USERNAME.match(json_data['username']) \
-                or not RULE_UUID.match(json_data['registration_key']):
+        if lazy_any([
+                lambda: json_data is None,
+                lambda: 'token' not in json_data,
+                lambda: 'username' not in json_data,
+                lambda: 'registration_key' not in json_data,
+                lambda: not isinstance(json_data['token'], str),
+                lambda: not isinstance(json_data['username'], str),
+                lambda: not isinstance(json_data['registration_key'], str),
+                lambda: not RULE_TOKEN.match(json_data['token']),
+                lambda: not RULE_USERNAME.match(json_data['username']),
+                lambda: not RULE_UUID.match(json_data['registration_key']),
+        ]):
             raise BadRequest()
         return jsonify(self.queue_dispatcher({
             '_': 'registration:choose_username',
@@ -85,16 +87,18 @@ class RegistrationAPI(MountableAPI):
         :return: JSON response
         """
         json_data = request.get_json()
-        if json_data is None \
-            or 'token' not in json_data \
-            or 'registration_key' not in json_data \
-            or 'password' not in json_data \
-            or not isinstance(json_data['token'], str) \
-            or not isinstance(json_data['registration_key'], str) \
-            or not isinstance(json_data['password'], str) \
-            or not RULE_TOKEN.match(json_data['token']) \
-            or not RULE_UUID.match(json_data['registration_key']) \
-                or not RULE_PASSWORD.match(json_data['password']):
+        if lazy_any([
+                lambda: json_data is None,
+                lambda: 'token' not in json_data,
+                lambda: 'registration_key' not in json_data,
+                lambda: 'password' not in json_data,
+                lambda: not isinstance(json_data['token'], str),
+                lambda: not isinstance(json_data['registration_key'], str),
+                lambda: not isinstance(json_data['password'], str),
+                lambda: not RULE_TOKEN.match(json_data['token']),
+                lambda: not RULE_UUID.match(json_data['registration_key']),
+                lambda: not RULE_PASSWORD.match(json_data['password']),
+        ]):
             raise BadRequest()
         return jsonify(self.queue_dispatcher({
             '_': 'registration:set_password',
