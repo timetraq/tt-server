@@ -4,10 +4,11 @@ Test the registration process with a browser
 from unittest import TestCase
 
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver import Firefox
 from selenium.webdriver.common.keys import Keys
 
 from ...core.lib.db import UserDatabaseConnectivity
-from ..lib.browser import prepare_test, cleanup
+from ..lib.server import prepare_test, cleanup
 
 
 class RegistrationWebTest(TestCase):
@@ -43,9 +44,7 @@ class RegistrationWebTest(TestCase):
         }
         cls.mongo.collection.save(test_user)
         cls.config = dict()
-        cls.webdriver = None
         prepare_test(cls)
-        # cls.webdriver.maximize_window()
         cls.base_url = 'http://{:s}:{:d}/static/index.xhtml'.format(cls.config['bind_ip'], cls.config['bind_port'])
 
     @classmethod
@@ -61,13 +60,13 @@ class RegistrationWebTest(TestCase):
         """
         Force a page refresh between tests
         """
-        self.webdriver.refresh()
-        self.webdriver.implicitly_wait(5)
+        self.webdriver = Firefox()
 
     def tearDown(self):
         """
         Throw test user out of database
         """
+        self.webdriver.quit()
         collection = self.mongo.collection
         test_user = collection.find_one({
             'username': 'UnittestNonExistingTestUser',
