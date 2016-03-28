@@ -61,6 +61,7 @@ class RegistrationWebTest(TestCase):
         Force a page refresh between tests
         """
         self.webdriver = Firefox()
+        self.webdriver.implicitly_wait(10)
 
     def tearDown(self):
         """
@@ -79,7 +80,7 @@ class RegistrationWebTest(TestCase):
         Get the registration form button
         """
         self.webdriver.get(self.base_url)
-        self.webdriver.implicitly_wait(5)
+        self.webdriver.implicitly_wait(10)
         button = self.webdriver.find_element_by_xpath('//xhtml:button[@data-formaction="registrationForm"]')
         return button
 
@@ -89,7 +90,7 @@ class RegistrationWebTest(TestCase):
         """
         button = self.__util_get_reg_button()
         button.click()
-        self.webdriver.implicitly_wait(5)
+        self.webdriver.implicitly_wait(10)
 
     def test_find_button(self):
         """
@@ -130,7 +131,7 @@ class RegistrationWebTest(TestCase):
         username_field.click()
         username_field.send_keys('UnittestExistingTestUser')
         username_field.send_keys(Keys.ENTER)
-        self.webdriver.implicitly_wait(2)
+        self.webdriver.implicitly_wait(5)
         error_msg = form.find_element_by_xpath(
             '//xhtml:div[@data-fieldref="formlib_registration_username" and @role="alert"]'
         )
@@ -153,13 +154,13 @@ class RegistrationWebTest(TestCase):
             username_field.click()
             username_field.send_keys('UnittestNonExistingTestUser')
             username_field.send_keys(Keys.ENTER)
-            self.webdriver.implicitly_wait(2)
+            self.webdriver.implicitly_wait(5)
 
     def __util_test_single_pwd_error_message(self, form):
         """
         Check if there is only a single pwd error message
         """
-        self.webdriver.implicitly_wait(2)
+        self.webdriver.implicitly_wait(5)
         error_message = form.find_element_by_xpath(
             '//xhtml:div[@data-fieldref="formlib_registration_password1" and @role="alert"]'
         )
