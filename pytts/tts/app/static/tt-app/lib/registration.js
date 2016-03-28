@@ -51,7 +51,7 @@
                 local.states[id].registration_key = json.registration_key;
                 local.states[id].token = json.token;
                 if (json.username_message != 'username_available') {
-                    $('<div></div>').attr('data-fieldref', $(usernameField).attr('id')).attr('role', 'alert').addClass('alert').addClass('alert-danger').text('Username invalid:' + json.username_message).insertBefore($(div));
+                    $('<div></div>').attr('data-fieldref', $(usernameField).attr('id')).attr('role', 'alert').addClass('alert').addClass('alert-danger').text('Username invalid: ' + json.username_message).insertBefore($(div));
                     $(div).addClass('has-error');
                     $(div).find('span#formlib_registration_usernameStatus').text('(error)');
                     $(div).find('span.form-control-feedback').addClass('glyphicon-exclamation-sign');
@@ -114,6 +114,7 @@
                 $(p1div).find('span#'+ $(p1div).find('input').attr('aria-describedby')).text('(error)');
                 $(p1div).find('span.form-control-feedback').addClass('glyphicon-exclamation-sign');
                 $(p1).focus();
+                return;
             }
             else {
                 $(p1div).addClass('has-success');
@@ -126,7 +127,6 @@
                 $(p2div).addClass('has-error');
                 $(p2div).find('span#'+ $(p1div).find('input').attr('aria-describedby')).text('(error)');
                 $(p2div).find('span.form-control-feedback').addClass('glyphicon-exclamation-sign');
-                return;
             }
             $(p2div).addClass('has-success');
             $(p2div).find('span#'+ $(p2div).find('input').attr('aria-describedby')).text('(ok)');
@@ -186,9 +186,9 @@
     local.prepareForm = function (id, form) {
         local.states[id] = { state: 0 };
         $(form).submit(function (event) {
-            event.preventDefault();
-            // event.stopPropagation();
             local.nextStep(id, form);
+            event.preventDefault();
+            event.stopPropagation();
         });
         local.nextStep(id, form);
     };
