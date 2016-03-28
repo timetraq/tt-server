@@ -15,8 +15,9 @@
 
     namespace.registrationDialog = function () {
         BootstrapDialog.show({
-            title: 'Registration',
+            title: '<b>Registration</b>',
             message: $('<div></div>').load('dialogs/registration.xhtml'),
+            closeIcon: '<span class="glyphicon glyphicon-remove"></span>',
             onshown: function () {
                 window.tts.registration.init(this);
             }
