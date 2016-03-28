@@ -44,7 +44,6 @@ class RegistrationWebTest(TestCase):
         cls.mongo.collection.save(test_user)
         cls.config = dict()
         cls.webdriver = None
-        """:type: selenium.webdriver.Firefox"""
         prepare_test(cls)
         # cls.webdriver.maximize_window()
         cls.base_url = 'http://{:s}:{:d}/static/index.xhtml'.format(cls.config['bind_ip'], cls.config['bind_port'])
@@ -122,7 +121,6 @@ class RegistrationWebTest(TestCase):
             '//xhtml:form[@id="formlib_registration"]'
         )
         username_field = form.find_element_by_name('username')
-        """:type: selenium.webdriver.remote.webelement.WebElement"""
         return form, username_field
 
     def test_enter_existing_username(self):
@@ -173,19 +171,19 @@ class RegistrationWebTest(TestCase):
             '//xhtml:div[@data-fieldref="formlib_registration_password2" and @role="alert"]'
         )
 
-    def test_not_existing_username_pwd1_too_short(self):
+    def test_non_exist_uname_pwd1_too_short(self):
         """
         Test with a too short password in password 1
         """
         form, username_field = self.__util_get_form_and_username_field()
         self.__util_enter_non_existing_username(username_field)
-        pwd1, pwd2 = RegistrationWebTest.util_get_password_fields(form)
+        pwd1, dummy = RegistrationWebTest.util_get_password_fields(form)
         pwd1.click()
         pwd1.send_keys('123')
         pwd1.send_keys(Keys.ENTER)
         self.__util_test_single_pwd_error_message(form)
 
-    def test_not_existing_username_pwd1_and_pwd2_too_short_but_equal(self):
+    def test_non_exist_uname_pwd1_pwd2_too_short_but_eq(self):
         """
         Test with two passwords equal, but to short
         """
@@ -198,7 +196,7 @@ class RegistrationWebTest(TestCase):
         pwd2.send_keys(Keys.ENTER)
         self.__util_test_single_pwd_error_message(form)
 
-    def test_not_existing_username_with_valid_pwd1_and_invalid_repeat(self):
+    def test_non_exist_uname_w_val_pwd1_a_inval_repeat(self):
         """
         Test with long enough passwords, but not equal
         """
