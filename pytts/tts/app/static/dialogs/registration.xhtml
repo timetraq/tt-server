@@ -1,8 +1,10 @@
-<form method="post" action="/api/v1.0/auth/registration" role="form">
+<form id="formlib_registration" method="post" action="registration">
+    <div class="well well-sm">Please choose a username and a password. Your account will be enabled by an administrator shortly after creation.</div>
     <div class="form-group has-feedback has-warning">
-        <label for="username" class="control-label">Username:</label>
-        <input placeholder="Enter desired username and press enter" aria-describedby="usernameStatus" type="text" id="username" name="username" class="form-control" />
+        <label for="formlib_registration_username" class="control-label">Username:</label>
+        <input placeholder="Enter desired username and press enter" aria-describedby="formlib_registration_usernameStatus" type="text" id="formlib_registration_username" name="username" class="form-control" />
         <span class="glyphicon glyphicon-warning-sign form-control-feedback" aria-hidden="true"></span>
-        <span id="usernameStatus" class="sr-only">(warning)</span>
+        <span id="formlib_registration_usernameStatus" class="sr-only">(warning)</span>
     </div>
+    <button class="btn btn-default sr-only" type="submit">Proceed with registration</button>
 </form>
