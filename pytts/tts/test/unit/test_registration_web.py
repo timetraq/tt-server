@@ -67,6 +67,7 @@ class RegistrationWebTest(TestCase):
         """
         Throw test user out of database
         """
+        self.webdriver.close()
         self.webdriver.quit()
         collection = self.mongo.collection
         test_user = collection.find_one({
