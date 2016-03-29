@@ -2,6 +2,7 @@
 Test the registration process with a browser
 """
 from unittest import TestCase
+from time import sleep
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver import Firefox
@@ -82,6 +83,7 @@ class RegistrationWebTest(TestCase):
         """
         self.webdriver.get(self.base_url)
         self.webdriver.implicitly_wait(10)
+        sleep(3)
         button = self.webdriver.find_element_by_xpath('//xhtml:button[@data-formaction="registrationForm"]')
         return button
 
@@ -92,6 +94,7 @@ class RegistrationWebTest(TestCase):
         button = self.__util_get_reg_button()
         button.click()
         self.webdriver.implicitly_wait(10)
+        sleep(5)
 
     def test_find_button(self):
         """
@@ -143,6 +146,7 @@ class RegistrationWebTest(TestCase):
         """
         Find the two password fields in the form
         """
+        sleep(3)
         pwd_field_1 = form.find_element_by_name('password1')
         pwd_field_2 = form.find_element_by_name('password2')
         return pwd_field_1, pwd_field_2
@@ -156,12 +160,14 @@ class RegistrationWebTest(TestCase):
             username_field.send_keys('UnittestNonExistingTestUser')
             username_field.send_keys(Keys.ENTER)
             self.webdriver.implicitly_wait(5)
+            sleep(3)
 
     def __util_test_single_pwd_error_message(self, form):
         """
         Check if there is only a single pwd error message
         """
         self.webdriver.implicitly_wait(5)
+        sleep(1)
         error_message = form.find_element_by_xpath(
             '//xhtml:div[@data-fieldref="formlib_registration_password1" and @role="alert"]'
         )

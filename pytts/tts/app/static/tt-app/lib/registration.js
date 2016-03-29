@@ -127,6 +127,7 @@
                 $(p2div).addClass('has-error');
                 $(p2div).find('span#'+ $(p1div).find('input').attr('aria-describedby')).text('(error)');
                 $(p2div).find('span.form-control-feedback').addClass('glyphicon-exclamation-sign');
+                return;
             }
             $(p2div).addClass('has-success');
             $(p2div).find('span#'+ $(p2div).find('input').attr('aria-describedby')).text('(ok)');
@@ -185,10 +186,11 @@
 
     local.prepareForm = function (id, form) {
         local.states[id] = { state: 0 };
-        $(form).submit(function (event) {
-            local.nextStep(id, form);
+        $(form).on('submit', function (event) {
             event.preventDefault();
             event.stopPropagation();
+            local.nextStep(id, form);
+            return false;
         });
         local.nextStep(id, form);
     };
